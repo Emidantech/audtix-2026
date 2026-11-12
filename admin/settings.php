@@ -5,9 +5,10 @@ if (!(can('settings.view') || can('mail.view') || can('roles.view') || can('admi
 $m = mail_config(); $b = brand();
 $cards = [
     ['settings.view', 'branding.php', 'palette', 'primary', 'Branding', 'Logo, favicon and brand colours used on the website and in this panel.'],
-    ['mail.view', 'mail-settings.php', 'envelope-paper', 'success', 'Email and notifications', 'How the system sends email (SMTP or server mail), who receives system notifications, and which forms send them.'],
+    ['mail.view', 'mail-settings.php', 'envelope-paper', 'success', 'Email settings', 'Mail server, notification emails and test email.'],
     ['roles.view', 'roles.php', 'shield-check', 'warning', 'Roles and permissions', 'Create roles and choose what each one can view, add, edit and delete.'],
     ['admins.view', 'admins.php', 'people', 'info', 'Admin users', 'Add people to the panel, give them a role, reset passwords and deactivate accounts.'],
+    ['settings.edit', 'cache.php', 'arrow-clockwise', 'danger', 'Clear cache', 'Refresh branding, panel files and server cache after changes.'],
 ];
 page_head('Business settings', $admin, 'settings', [['Business settings', null]]);
 ?>

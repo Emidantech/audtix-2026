@@ -38,7 +38,41 @@
   function niceDate(d) { var p = d.split("-"); return p.length === 3 ? (+p[2]) + " " + MONTHS[+p[1] - 1] + " " + p[0] : d; }
   function taxPeriods() { var a = val("tax_period_from"), b = val("tax_period_to"); return a && b ? niceDate(a) + " to " + niceDate(b) : ""; }
   // "To" can never be before "From"
-  form.elements.tax_period_from.addEventListener("change", function () { form.elements.tax_period_to.min = this.value || "2000-01-01"; });
+  /* Tax period: month + year pickers (work the same in every browser), plus one-tap financial years (July to June). */
+  (function () {
+    var fm = $("#f-from-m"), fy = $("#f-from-y"), tm = $("#f-to-m"), ty = $("#f-to-y"), sum = $("#period-sum"), quick = $("#fy-quick");
+    var now = new Date(), cy = now.getFullYear();
+    [fy, ty].forEach(function (sel) { for (var y = cy + 1; y >= cy - 15; y--) { var o = document.createElement("option"); o.value = o.textContent = String(y); sel.appendChild(o); } });
+    var fyNow = now.getMonth() >= 6 ? cy : cy - 1, html = "<span>Quick pick:</span>";
+    for (var y = fyNow; y > fyNow - 4; y--) html += '<button type="button" data-fy="' + y + '">FY ' + y + "/" + String(y + 1).slice(2) + "</button>";
+    html += '<button type="button" data-cal="' + (cy - 1) + '">Year ' + (cy - 1) + "</button>";
+    quick.innerHTML = html;
+    function last(y, m) { return new Date(+y, +m, 0).getDate(); }
+    function update() {
+      var a = fm.value && fy.value ? fy.value + "-" + fm.value + "-01" : "", b = tm.value && ty.value ? ty.value + "-" + tm.value + "-" + ("0" + last(ty.value, tm.value)).slice(-2) : "";
+      form.elements.tax_period_from.value = a; form.elements.tax_period_to.value = b;
+      $$("button", quick).forEach(function (x) { x.classList.remove("on"); });
+      if (a && b && b >= a) {
+        var months = (+ty.value - +fy.value) * 12 + (+tm.value - +fm.value) + 1;
+        sum.textContent = "Selected: " + niceDate(a) + " to " + niceDate(b) + " (" + months + " month" + (months === 1 ? "" : "s") + ")";
+        sum.className = "period-sum ok"; setErr("tax_periods", "");
+        $$("button", quick).forEach(function (x) { var k = x.getAttribute("data-fy"), c = x.getAttribute("data-cal"); if ((k && a === k + "-07-01" && b === (+k + 1) + "-06-30") || (c && a === c + "-01-01" && b === c + "-12-31")) x.classList.add("on"); });
+      } else if (a && b) { sum.textContent = "The end must be after the start."; sum.className = "period-sum bad"; }
+      else sum.textContent = "";
+    }
+    function set(a1, a2, b1, b2) { fm.value = a1; fy.value = a2; tm.value = b1; ty.value = b2; update(); }
+    quick.addEventListener("click", function (e) {
+      var x = e.target.closest("button"); if (!x) return;
+      var k = x.getAttribute("data-fy"), c = x.getAttribute("data-cal");
+      if (k) set("07", k, "06", String(+k + 1)); else set("01", c, "12", c);
+    });
+    [fm, fy, tm, ty].forEach(function (el) { el.addEventListener("change", function () {
+      // picking a start fills a sensible end (12 months later) if no end chosen yet
+      if ((el === fm || el === fy) && fm.value && fy.value && !tm.value && !ty.value) { var d = new Date(+fy.value, +fm.value - 1 + 11, 1); tm.value = ("0" + (d.getMonth() + 1)).slice(-2); ty.value = String(d.getFullYear()); }
+      update();
+    }); });
+    form.addEventListener("reset", function () { setTimeout(update, 0); });
+  })();
   function uraDetails() {
     var out = [];
     $$("[data-ura]", form).forEach(function (p) {
@@ -70,8 +104,8 @@
     if (!s.length) errs.services = "Choose at least one service.";
     if (s.indexOf("other") > -1 && val("other_service").length < 2) errs.other_service = "Tell us which other service.";
     var tf = val("tax_period_from"), tt = val("tax_period_to");
-    if (!tf || !tt) errs.tax_periods = "Pick both the start and end dates of the tax period.";
-    else if (tt < tf) errs.tax_periods = "The end date must be after the start date.";
+    if (!tf || !tt) errs.tax_periods = "Pick the month and year the period starts and ends, or tap a financial year.";
+    else if (tt < tf) errs.tax_periods = "The end of the period must be after the start.";
     var fp = fileProblem(); if (fp) errs.files = fp;
     if (!form.elements.accuracy_confirmed.checked) errs.accuracy_confirmed = "Please confirm that the information is true and complete.";
     if (!form.elements.consent.checked) errs.consent = "Please confirm so we can contact you.";

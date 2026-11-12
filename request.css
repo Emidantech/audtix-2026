@@ -126,3 +126,17 @@ fieldset.field.bad .q-irow input { border-color: #B42318; }
 .q-pick a:hover { border-color: var(--blue-deep); background: var(--blue-soft); }
 .q-pick b { display: block; color: var(--blue-ink); }
 .q-pick span { font-size: 14px; color: var(--muted); }
+/* Tax period picker */
+.fy-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.fy-quick span { font-size: 14px; color: var(--muted); margin-right: 2px; }
+.fy-quick button { font: inherit; font-size: 14px; font-weight: 600; color: var(--blue-ink); background: #fff; border: 1.5px solid #B5C9E3; border-radius: 99px; padding: 7px 13px; cursor: pointer; }
+.fy-quick button:hover { border-color: var(--blue-deep); }
+.fy-quick button.on { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; }
+.period { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pp { display: grid; grid-template-columns: auto 1fr 110px; gap: 8px; align-items: center; }
+.pp .pl { font-weight: 600; font-size: 14px; min-width: 38px; }
+.pp select { width: 100%; min-width: 0; }
+.period-sum { margin: 10px 0 0; font-size: 14px; font-weight: 600; }
+.period-sum.ok { color: var(--ok, #0E7A43); }
+.period-sum.bad { color: #B42318; }
+@media (max-width: 640px) { .period { grid-template-columns: 1fr; } }
