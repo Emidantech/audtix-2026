@@ -157,9 +157,9 @@
 /* ---------- Floating "Request a quote" button (all pages except the forms themselves) ---------- */
 (function () {
   if (document.querySelector('.rq-form, #q-form')) return;
-  var services = [['Tax service', 'request-tax.html'], ['Audit service', 'request-audit.html'], ['ERP deployment', 'quote.html?service=erp'], ['Custom fintech systems', 'quote.html?service=custom'],
-    ['URA system integration', 'quote.html?service=ura'], ['Cyber security', 'quote.html?service=cyber'], ['Software development', 'quote.html?service=dev'], ['Networking', 'quote.html?service=net'],
-    ['Enterprise advisory', 'quote.html?service=adv'], ['ICT hardware', 'quote.html?service=ict']];
+  var services = [['Tax service', 'request-tax.html#rq-form'], ['Audit service', 'request-audit.html#rq-form'], ['ERP deployment', 'quote.html?service=erp#q-form'], ['Custom fintech systems', 'quote.html?service=custom#q-form'],
+    ['URA system integration', 'quote.html?service=ura#q-form'], ['Cyber security', 'quote.html?service=cyber#q-form'], ['Software development', 'quote.html?service=dev#q-form'], ['Networking', 'quote.html?service=net#q-form'],
+    ['Enterprise advisory', 'quote.html?service=adv#q-form'], ['ICT hardware', 'quote.html?service=ict#q-form']];
   var w = document.createElement('div'); w.className = 'fab';
   w.innerHTML = '<div class="fab-panel" id="fab-panel" role="menu" hidden><b>What do you need?</b>' + services.map(function (s) { return '<a role="menuitem" href="' + s[1] + '">' + s[0] + '<span aria-hidden="true">→</span></a>'; }).join('') +
     '<a role="menuitem" class="fab-wa" href="https://wa.me/256701287388" target="_blank" rel="noopener noreferrer">Not sure? WhatsApp us</a></div>' +

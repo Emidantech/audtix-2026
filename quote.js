@@ -90,6 +90,11 @@
     });
     form.hidden = false; $("#q-loading").hidden = true;
     sync();
+    // Links like quote.html?service=ict#q-form land on the start of the form.
+    // The form is drawn after page load, so the browser's own jump misses it.
+    if (location.hash === "#q-form") {
+      setTimeout(function () { form.scrollIntoView({ block: "start", behavior: "auto" }); }, 0);
+    }
   }
   function renderHeader() {
     var svc = SPEC.services[SERVICE];
