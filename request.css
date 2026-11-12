@@ -8,6 +8,7 @@
 .rq-main { padding-block: 48px 84px; }
 .rq-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 36px; align-items: start; }
 .rq-form, .rq-done { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 30px; display: grid; gap: 34px; }
+.rq-form { scroll-margin-top: 96px; }
 .rq-step { display: grid; gap: 18px; }
 .rq-step h2 { font-size: 22px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .rq-step h2 span { width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-size: 15px; }
