@@ -94,3 +94,7 @@ body.sx-lock { overflow: hidden; }
 @keyframes sxf { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sxu { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .sx-ov, .sx-card { animation: none; } }
+
+.ura-panel { border: 1.5px solid #B5C9E3; border-left: 4px solid var(--blue-deep); border-radius: 10px; padding: 14px 16px 4px; margin: 4px 0 14px; background: var(--blue-soft); }
+.ura-panel h3 { margin: 0 0 10px; font-size: 15px; }
+.ura-panel .field input { background: #fff; }
