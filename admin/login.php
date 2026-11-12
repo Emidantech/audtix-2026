@@ -36,15 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 page_head('Sign in');
 ?>
-<div class="login">
-  <h1><span class="dot"></span>Audtix Admin</h1>
-  <p class="muted">Sign in to manage tax and audit requests.</p>
-  <?php if ($error): ?><div class="flash bad" role="alert"><?= h($error) ?></div><?php endif; ?>
-  <form method="post" autocomplete="on">
-    <?= csrf_field() ?>
-    <label>Username or email<input name="username" required autofocus autocomplete="username" maxlength="190"></label>
-    <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
-    <button class="btn" type="submit">Sign in</button>
-  </form>
-</div>
-<?php page_foot();
+<p class="login-box-msg">Sign in to manage requests and quotations.</p>
+<?php if ($error): ?><div class="alert alert-danger" role="alert"><?= h($error) ?></div><?php endif; ?>
+<form method="post" autocomplete="on"><?= csrf_field() ?>
+  <div class="input-group mb-3"><input class="form-control" name="username" required autofocus autocomplete="username" maxlength="190" placeholder="Username or email" aria-label="Username or email"><span class="input-group-text"><i class="bi bi-person"></i></span></div>
+  <div class="input-group mb-3"><input class="form-control" name="password" type="password" required autocomplete="current-password" placeholder="Password" aria-label="Password"><span class="input-group-text"><i class="bi bi-lock-fill"></i></span></div>
+  <div class="d-grid"><button class="btn btn-primary" type="submit">Sign in</button></div>
+</form>
+<?php page_foot(true);

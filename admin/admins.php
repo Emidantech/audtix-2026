@@ -43,28 +43,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($secret === null) redirect('admins.php');
 }
 $list = $pdo->query('SELECT a.*, c.full_name AS creator FROM admins a LEFT JOIN admins c ON c.id = a.created_by ORDER BY a.id')->fetchAll();
-page_head('Admins', $admin);
+page_head('Admins', $admin, 'admins');
 ?>
-<h1>Admins</h1><p class="muted">Only super admins can see this page. New admins get a one-time temporary password and must choose their own at first sign-in.</p>
-<?php if ($secret !== null): ?><div class="card"><h2>Temporary password for <?= h($secretFor) ?></h2><p class="secret"><?= h($secret) ?></p><p class="muted">Send it to them privately. It will not be shown again.</p></div><?php endif; ?>
-<div class="card tablewrap" style="padding:0"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Added by</th><th></th></tr></thead><tbody>
+<p class="text-secondary">Only super admins can see this page. New admins get a one-time temporary password and must choose their own at first sign-in.</p>
+<?php if ($secret !== null): ?><div class="callout callout-warning mb-3"><h5>Temporary password for <?= h($secretFor) ?></h5><p class="secret mb-2"><?= h($secret) ?></p><p class="text-secondary mb-0">Send it to them privately. It will not be shown again.</p></div><?php endif; ?>
+<div class="row g-3"><div class="col-xl-8">
+<div class="card"><div class="card-header"><h3 class="card-title">Admin accounts</h3></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Added by</th><th></th></tr></thead><tbody>
 <?php foreach ($list as $a): ?><tr>
-  <td><b><?= h($a['full_name']) ?></b><br><span class="muted"><?= h($a['email']) ?><?= $a['phone'] ? ' &middot; ' . h($a['phone']) : '' ?><?= $a['job_title'] ? '<br>' . h($a['job_title']) : '' ?></span></td>
+  <td><b><?= h($a['full_name']) ?></b><br><span class="text-secondary small"><?= h($a['email']) ?><?= $a['phone'] ? ' &middot; ' . h($a['phone']) : '' ?><?= $a['job_title'] ? '<br>' . h($a['job_title']) : '' ?></span></td>
   <td class="mono"><?= h($a['username']) ?></td>
-  <td><form method="post" style="display:flex;gap:6px"><?= csrf_field() ?><input type="hidden" name="action" value="role"><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><select name="role" onchange="this.form.submit()"><option value="admin"<?= $a['role'] === 'admin' ? ' selected' : '' ?>>Admin</option><option value="super_admin"<?= $a['role'] === 'super_admin' ? ' selected' : '' ?>>Super admin</option></select></form></td>
-  <td><span class="pill <?= (int) $a['is_active'] ? 'good' : 'bad' ?>"><?= (int) $a['is_active'] ? 'Active' : 'Disabled' ?></span><?= $a['locked_until'] && $a['locked_until'] > now() ? ' <span class="pill bad">Locked</span>' : '' ?><?= (int) $a['must_change_pw'] ? '<br><small class="muted">must set a new password</small>' : '' ?></td>
-  <td><?= $a['last_login_at'] ? h(eat($a['last_login_at'])) . '<br><small class="muted">' . h($a['last_login_ip']) . '</small>' : '<span class="muted">Never</span>' ?></td>
-  <td><?= h($a['creator'] ?: 'Setup') ?></td>
-  <td style="white-space:nowrap"><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="reset"><button class="btn sm ghost" onclick="return confirm('Reset the password for <?= h($a['username']) ?>?')">Reset password</button></form>
-    <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="toggle"><button class="btn sm <?= (int) $a['is_active'] ? 'danger' : '' ?>"><?= (int) $a['is_active'] ? 'Deactivate' : 'Activate' ?></button></form></td>
-</tr><?php endforeach; ?></tbody></table></div>
-<div class="card"><h2>Add an admin</h2>
-<form method="post" class="stack" style="max-width:520px"><?= csrf_field() ?><input type="hidden" name="action" value="create">
-  <label>Full name<input name="full_name" required maxlength="120"></label>
-  <label>Username<input name="username" required maxlength="40" pattern="[A-Za-z0-9._-]{3,40}" autocapitalize="none"></label>
-  <label>Email<input name="email" type="email" required maxlength="190"></label>
-  <label>Phone (optional)<input name="phone" maxlength="40"></label>
-  <label>Job title (optional)<input name="job_title" maxlength="120"></label>
-  <label>Role<select name="role"><option value="admin">Admin (works on requests)</option><option value="super_admin">Super admin (also manages admins and sees the login log)</option></select></label>
-  <button class="btn">Create admin</button></form></div>
+  <td><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="role"><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><select name="role" class="form-select form-select-sm" data-autosubmit aria-label="Role"><option value="admin"<?= $a['role'] === 'admin' ? ' selected' : '' ?>>Admin</option><option value="super_admin"<?= $a['role'] === 'super_admin' ? ' selected' : '' ?>>Super admin</option></select></form></td>
+  <td><span class="badge text-bg-<?= (int) $a['is_active'] ? 'success' : 'danger' ?>"><?= (int) $a['is_active'] ? 'Active' : 'Disabled' ?></span><?= $a['locked_until'] && $a['locked_until'] > now() ? ' <span class="badge text-bg-danger">Locked</span>' : '' ?><?= (int) $a['must_change_pw'] ? '<br><small class="text-secondary">must set a new password</small>' : '' ?></td>
+  <td class="small"><?= $a['last_login_at'] ? h(eat($a['last_login_at'])) . '<br><span class="text-secondary">' . h($a['last_login_ip']) . '</span>' : '<span class="text-secondary">Never</span>' ?></td>
+  <td class="small"><?= h($a['creator'] ?: 'Setup') ?></td>
+  <td class="text-nowrap text-end"><form method="post" class="d-inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="reset"><button class="btn btn-sm btn-outline-secondary" data-confirm="Reset the password for <?= h($a['username']) ?>?"><i class="bi bi-key"></i> Reset</button></form>
+    <form method="post" class="d-inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="toggle"><button class="btn btn-sm <?= (int) $a['is_active'] ? 'btn-outline-danger' : 'btn-success' ?>"><?= (int) $a['is_active'] ? 'Deactivate' : 'Activate' ?></button></form></td>
+</tr><?php endforeach; ?></tbody></table></div></div></div>
+</div><div class="col-xl-4">
+<div class="card card-outline card-primary"><div class="card-header"><h3 class="card-title">Add an admin</h3></div><div class="card-body">
+<form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="create">
+  <div class="mb-2"><label class="form-label" for="a-fn">Full name</label><input id="a-fn" class="form-control" name="full_name" required maxlength="120"></div>
+  <div class="mb-2"><label class="form-label" for="a-un">Username</label><input id="a-un" class="form-control" name="username" required maxlength="40" pattern="[A-Za-z0-9._-]{3,40}" autocapitalize="none"></div>
+  <div class="mb-2"><label class="form-label" for="a-em">Email</label><input id="a-em" class="form-control" name="email" type="email" required maxlength="190"></div>
+  <div class="mb-2"><label class="form-label" for="a-ph">Phone (optional)</label><input id="a-ph" class="form-control" name="phone" maxlength="40"></div>
+  <div class="mb-2"><label class="form-label" for="a-jt">Job title (optional)</label><input id="a-jt" class="form-control" name="job_title" maxlength="120"></div>
+  <div class="mb-3"><label class="form-label" for="a-ro">Role</label><select id="a-ro" class="form-select" name="role"><option value="admin">Admin (works on requests and quotations)</option><option value="super_admin">Super admin (also manages admins, deletes, sees the login log)</option></select></div>
+  <button class="btn btn-primary"><i class="bi bi-person-plus"></i> Create admin</button></form></div></div>
+</div></div>
 <?php page_foot();

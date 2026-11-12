@@ -6,7 +6,9 @@ The website files are at the top level of this repository, so Hostinger Git can 
 |---|---|---|
 | (top level) | the pages, `request.js`, `audit.js`, `submit.js`, styles | yes |
 | `api/submit.php` | receives the Tax and Audit forms: saves to MySQL **and** emails a copy | only `submit.php` |
-| `admin/` | the admin panel (sign-in required) | yes, behind login |
+| `quote.html`, `quote.js`, `quote-forms.json` | one reusable quotation page for every service in the Services menu | yes |
+| `api/quote.php` | receives the quotation forms: saves to MySQL **and** emails a copy | only `quote.php` |
+| `admin/` | the admin panel, built on AdminLTE 4 (bundled in `admin/assets/vendor`, nothing to install) | yes, behind login |
 | `database/audtix.mysql.sql` | the MySQL database file | never served |
 | `backend/` | the older Supabase kit, no longer used by the request forms (kept for the optional Forex and insights functions) | never served |
 
@@ -16,7 +18,15 @@ The website files are at the top level of this repository, so Hostinger Git can 
    - saves it to MySQL (tables `requests`, `request_files`, `request_events`);
    - emails a copy to the notify address (info@audtix.com, cc audtixsystem@gmail.com) with the answers and the uploaded documents attached.
    If one fails the other still happens (the email states when the database save failed, and the admin panel flags requests whose email failed). The files and a `request.json` copy are also kept on disk. The visitor only sees an error if **both** fail.
-3. Admins open `/admin/`, find the request by ID, change its status, assign it, add notes and download the documents.
+3. Admins open `/admin/` (the dashboard), find the request by ID, change its status, assign it, add notes and download the documents.
+
+## Quotations
+Every service in the **Services** menu after Tax and Audit (ERP deployment, Custom fintech systems, URA system integration, Cyber security, Software development, Networking, Enterprise advisory, ICT hardware) opens one page, `quote.html?service=<key>`, with the questions for that service.
+- **Service keys:** `erp`, `custom`, `ura`, `cyber`, `dev`, `net`, `adv`, `ict`. Link to a form directly, for example `quote.html?service=ict`.
+- **Changing the questions:** edit `quote-forms.json`. The page and the server both read it, so a new field, option or service appears on the website and is accepted by `api/quote.php` without code changes. Field types: text, email, tel, number, date, select, radio, checkboxes, textarea and items (a list of lines, used for ICT hardware). A field can be shown only when another answer is chosen, with `"show": "name=value"`, `"name!=value"` or `"name~value"` (a ticked checkbox).
+- **Quote numbers** look like `QT-ICT-2026-00001`: a running number per service and year.
+- **Admin panel:** *Quotations* in the left menu lists them by status (Pending, In review, Responded, Approved, Rejected, Cancelled, Completed, Spam) and *By service*. Opening a pending quotation moves it to In review. From a quotation you can assign it, add internal notes, **send the quotation** (amount, currency, valid-until date, a message and optional PDFs, emailed to the client with the team copied; status becomes Responded), mark it approved, declined, completed or cancelled, and edit the answers. *New quotation* records an enquiry that came by phone, email or a visit. Super admins can delete, one at a time or in bulk.
+- **Existing database:** if the database was imported before November 2026, import `database/migrations/2026-11-12-quotations.sql` once in phpMyAdmin. It only adds the three quotation tables (`quotes`, `quote_files`, `quote_events`). New installs get them from `database/audtix.mysql.sql`.
 
 ## Deploying on Hostinger (premium shared hosting)
 1. **Code:** hPanel, Websites, Manage, Advanced, Git. Use the SSH address, add the deploy key it shows to the GitHub repo (Settings, Deploy keys), branch `main`, install folder empty. Add the webhook under GitHub Settings, Webhooks for automatic deploys.

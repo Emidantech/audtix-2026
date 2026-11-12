@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__, 2) . '/api/lib/common.php';
+require dirname(__DIR__, 2) . '/api/lib/quotes.php';
 
 const IDLE_SECONDS = 3600;
 const MAX_FAILS = 5;
@@ -17,7 +18,7 @@ function start_session(): void {
 }
 start_session();
 header('X-Frame-Options: DENY'); header('X-Content-Type-Options: nosniff'); header('Referrer-Policy: same-origin'); header('Cache-Control: no-store');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; frame-ancestors 'none'");
 
 function csrf(): string { if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(24)); return $_SESSION['csrf']; }
 function csrf_field(): string { return '<input type="hidden" name="_csrf" value="' . h(csrf()) . '">'; }
@@ -78,20 +79,7 @@ function temp_password(): string {
     return $o . random_int(10, 99);
 }
 
+const STATUS_COLORS = ['new' => 'warning', 'in_review' => 'info', 'awaiting_client' => 'secondary', 'quoted' => 'primary', 'in_progress' => 'primary', 'completed' => 'success', 'closed' => 'success', 'spam' => 'dark'];
 const STATUSES = ['new' => 'New', 'in_review' => 'In review', 'awaiting_client' => 'Waiting for client', 'quoted' => 'Quoted', 'in_progress' => 'In progress', 'completed' => 'Completed', 'closed' => 'Closed', 'spam' => 'Spam'];
 
-function page_head(string $title, ?array $admin = null): void {
-    $f = flash();
-    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . h($title) . ' | Audtix Admin</title><link rel="stylesheet" href="admin.css"></head><body>';
-    if ($admin) {
-        $cur = basename($_SERVER['SCRIPT_NAME']);
-        $nav = ['index.php' => 'Requests', 'password.php' => 'My password'];
-        if ($admin['role'] === 'super_admin') { $nav['admins.php'] = 'Admins'; $nav['log.php'] = 'Login log'; }
-        echo '<header class="top"><a class="brand" href="index.php"><span class="dot"></span>Audtix <b>Admin</b></a><nav>';
-        foreach ($nav as $u => $l) echo '<a href="' . $u . '"' . ($cur === $u || ($u === 'index.php' && $cur === 'request.php') ? ' class="on"' : '') . '>' . h($l) . '</a>';
-        echo '</nav><form method="post" action="logout.php" class="out">' . csrf_field() . '<span class="who">' . h($admin['full_name']) . ' <em>' . ($admin['role'] === 'super_admin' ? 'Super admin' : 'Admin') . '</em></span><button class="btn sm ghost">Sign out</button></form></header>';
-    }
-    echo '<main class="wrap">';
-    if ($f) echo '<div class="flash ' . h($f[0]) . '" role="status">' . h($f[1]) . '</div>';
-}
-function page_foot(): void { echo '</main></body></html>'; }
+require __DIR__ . '/layout.php';
