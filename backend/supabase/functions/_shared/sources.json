@@ -1,0 +1,36 @@
+{
+  "groups": [
+    ["revenue", "Tax and revenue"],
+    ["social", "Pensions and social security"],
+    ["banks", "Central banks and finance ministries"],
+    ["markets", "Markets and insurance"],
+    ["business", "Business, standards and procurement"],
+    ["data", "Statistics and regional bodies"]
+  ],
+  "sources": [
+    { "id": "ura", "name": "Uganda Revenue Authority", "short": "URA", "group": "revenue", "country": "UG", "host": "ura.go.ug", "site": "https://ura.go.ug/en/category/ura-news", "feeds": ["https://ura.go.ug/en/category/ura-news/feed/", "https://ura.go.ug/en/feed/"], "aliases": ["uganda revenue authority", "ura"] },
+    { "id": "mofped", "name": "Ministry of Finance, Planning and Economic Development", "short": "MoFPED", "group": "banks", "country": "UG", "host": "finance.go.ug", "site": "https://www.finance.go.ug", "aliases": ["ministry of finance", "mofped", "finance.go.ug"] },
+    { "id": "bou", "name": "Bank of Uganda", "short": "BoU", "group": "banks", "country": "UG", "host": "bou.or.ug", "site": "https://www.bou.or.ug", "aliases": ["bank of uganda", "bou"] },
+    { "id": "nssf", "name": "National Social Security Fund (Uganda)", "short": "NSSF", "group": "social", "country": "UG", "host": "nssfug.org", "site": "https://www.nssfug.org", "aliases": ["nssf", "national social security fund"] },
+    { "id": "urbra", "name": "Uganda Retirement Benefits Regulatory Authority", "short": "URBRA", "group": "social", "country": "UG", "host": "urbra.go.ug", "site": "https://urbra.go.ug", "aliases": ["urbra", "retirement benefits regulatory"] },
+    { "id": "ursb", "name": "Uganda Registration Services Bureau", "short": "URSB", "group": "business", "country": "UG", "host": "ursb.go.ug", "site": "https://ursb.go.ug", "aliases": ["ursb", "uganda registration services bureau"] },
+    { "id": "ubos", "name": "Uganda Bureau of Statistics", "short": "UBOS", "group": "data", "country": "UG", "host": "ubos.org", "site": "https://www.ubos.org", "aliases": ["ubos", "uganda bureau of statistics"] },
+    { "id": "unbs", "name": "Uganda National Bureau of Standards", "short": "UNBS", "group": "business", "country": "UG", "host": "unbs.go.ug", "site": "https://www.unbs.go.ug", "aliases": ["unbs", "uganda national bureau of standards"] },
+    { "id": "ppda", "name": "Public Procurement and Disposal of Public Assets Authority", "short": "PPDA", "group": "business", "country": "UG", "host": "ppda.go.ug", "site": "https://www.ppda.go.ug", "aliases": ["ppda", "public procurement and disposal"] },
+    { "id": "kcca", "name": "Kampala Capital City Authority", "short": "KCCA", "group": "business", "country": "UG", "host": "kcca.go.ug", "site": "https://www.kcca.go.ug", "aliases": ["kcca", "kampala capital city authority"] },
+    { "id": "uia", "name": "Uganda Investment Authority", "short": "UIA", "group": "business", "country": "UG", "host": "ugandainvest.go.ug", "site": "https://www.ugandainvest.go.ug", "aliases": ["uganda investment authority", "uia"] },
+    { "id": "cma", "name": "Capital Markets Authority (Uganda)", "short": "CMA", "group": "markets", "country": "UG", "host": "cmauganda.co.ug", "site": "https://cmauganda.co.ug", "aliases": ["capital markets authority"] },
+    { "id": "use", "name": "Uganda Securities Exchange", "short": "USE", "group": "markets", "country": "UG", "host": "use.or.ug", "site": "https://www.use.or.ug", "aliases": ["uganda securities exchange"] },
+    { "id": "ira", "name": "Insurance Regulatory Authority of Uganda", "short": "IRA", "group": "markets", "country": "UG", "host": "ira.go.ug", "site": "https://www.ira.go.ug", "aliases": ["insurance regulatory authority"] },
+    { "id": "cbk", "name": "Central Bank of Kenya", "short": "CBK", "group": "banks", "country": "KE", "host": "centralbank.go.ke", "site": "https://www.centralbank.go.ke", "aliases": ["central bank of kenya", "cbk"] },
+    { "id": "treasury-ke", "name": "National Treasury of Kenya", "short": "Treasury KE", "group": "banks", "country": "KE", "host": "treasury.go.ke", "site": "https://www.treasury.go.ke", "aliases": ["national treasury", "treasury.go.ke"] },
+    { "id": "kra", "name": "Kenya Revenue Authority", "short": "KRA", "group": "revenue", "country": "KE", "host": "kra.go.ke", "site": "https://www.kra.go.ke", "aliases": ["kenya revenue authority", "kra"] },
+    { "id": "knbs", "name": "Kenya National Bureau of Statistics", "short": "KNBS", "group": "data", "country": "KE", "host": "knbs.or.ke", "site": "https://www.knbs.or.ke", "aliases": ["knbs", "kenya national bureau of statistics"] },
+    { "id": "bot", "name": "Bank of Tanzania", "short": "BoT", "group": "banks", "country": "TZ", "host": "bot.go.tz", "site": "https://www.bot.go.tz", "aliases": ["bank of tanzania"] },
+    { "id": "tra", "name": "Tanzania Revenue Authority", "short": "TRA", "group": "revenue", "country": "TZ", "host": "tra.go.tz", "site": "https://www.tra.go.tz", "aliases": ["tanzania revenue authority", "tra"] },
+    { "id": "bnr", "name": "National Bank of Rwanda", "short": "BNR", "group": "banks", "country": "RW", "host": "bnr.rw", "site": "https://www.bnr.rw", "aliases": ["national bank of rwanda", "bnr"] },
+    { "id": "rra", "name": "Rwanda Revenue Authority", "short": "RRA", "group": "revenue", "country": "RW", "host": "rra.gov.rw", "site": "https://www.rra.gov.rw", "aliases": ["rwanda revenue authority", "rra"] },
+    { "id": "eac", "name": "East African Community", "short": "EAC", "group": "data", "country": "EAC", "host": "eac.int", "site": "https://www.eac.int", "aliases": ["east african community", "eac"] }
+  ],
+  "countries": [["UG", "Uganda"], ["KE", "Kenya"], ["TZ", "Tanzania"], ["RW", "Rwanda"], ["EAC", "East African Community"]]
+}

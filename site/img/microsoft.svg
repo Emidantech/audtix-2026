@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 440" width="600" height="440" fill="none">
+<rect width="600" height="440" rx="24" fill="#E6F1FE"/>
+<g stroke="#9CC9F8" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"><path d="M240 170L128 100M360 170L472 100M240 270L128 340M360 270L472 340"/></g>
+<rect x="190" y="120" width="220" height="200" rx="14" fill="#FFFFFF" stroke="#0A2A55" stroke-width="3"/>
+<rect x="190" y="120" width="220" height="30" rx="14" fill="#0366D0"/><rect x="190" y="136" width="220" height="14" fill="#0366D0"/><rect x="206" y="130" width="60" height="8" rx="4" fill="#FFFFFF"/>
+<g><rect x="206" y="164" width="56" height="40" rx="8" fill="#E6F1FE"/><rect x="272" y="164" width="56" height="40" rx="8" fill="#E6F1FE"/><rect x="338" y="164" width="56" height="40" rx="8" fill="#E6F1FE"/></g>
+<g fill="#0479EE"><rect x="216" y="176" width="26" height="6" rx="3"/><rect x="282" y="176" width="26" height="6" rx="3"/><rect x="348" y="176" width="26" height="6" rx="3"/></g>
+<g fill="#0A2A55" font-family="DejaVu Sans Mono, Liberation Mono, monospace" font-size="13" font-weight="bold"><text x="216" y="196">148M</text><text x="282" y="196">1.2k</text><text x="348" y="196">98%</text></g>
+<path d="M206 296l36-34 30 18 44-48 40 26 38-36" stroke="#0479EE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="394" cy="224" r="6" fill="#0479EE"/>
+<g><rect x="70" y="52" width="116" height="96" rx="16" fill="#0E7A43"/><g stroke="#FFFFFF" stroke-width="3"><path d="M92 76h72M92 100h72M92 124h72M116 70v66M140 70v66"/></g></g>
+<g><rect x="414" y="52" width="116" height="96" rx="16" fill="#0366D0"/><rect x="438" y="78" width="68" height="46" rx="6" stroke="#FFFFFF" stroke-width="5"/><path d="M438 84l34 24 34-24" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/></g>
+<g><rect x="70" y="292" width="116" height="96" rx="16" fill="#6B4E9B"/><path d="M96 316h52a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8h-30l-14 10v-10h-8a8 8 0 0 1-8-8v-22a8 8 0 0 1 8-8z" fill="#FFFFFF"/></g>
+<g><rect x="414" y="292" width="116" height="96" rx="16" fill="#F5A623"/><g fill="#FFFFFF"><rect x="438" y="344" width="16" height="22" rx="3"/><rect x="462" y="324" width="16" height="42" rx="3"/><rect x="486" y="334" width="16" height="32" rx="3"/></g></g>
+</svg>

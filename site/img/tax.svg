@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 440" width="600" height="440" fill="none">
+<rect width="600" height="440" rx="24" fill="#E6F1FE"/>
+<circle cx="500" cy="90" r="60" fill="#9CC9F8" opacity=".5"/><circle cx="90" cy="360" r="46" fill="#9CC9F8" opacity=".5"/>
+<rect x="150" y="50" width="260" height="340" rx="16" fill="#FFFFFF" stroke="#0A2A55" stroke-width="3"/>
+<rect x="178" y="82" width="120" height="14" rx="7" fill="#0479EE"/>
+<rect x="178" y="116" width="204" height="9" rx="4.5" fill="#E6F1FE"/><rect x="178" y="138" width="170" height="9" rx="4.5" fill="#E6F1FE"/><rect x="178" y="160" width="204" height="9" rx="4.5" fill="#E6F1FE"/><rect x="178" y="182" width="140" height="9" rx="4.5" fill="#E6F1FE"/>
+<rect x="178" y="214" width="204" height="56" rx="10" fill="#E6F1FE"/>
+<text x="192" y="238" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="11" fill="#475A75">VAT PAYABLE (UGX)</text><text x="192" y="260" font-family="DejaVu Sans Mono, Liberation Mono, monospace" font-size="19" font-weight="bold" fill="#0A2A55">12,840,000</text>
+<rect x="178" y="296" width="92" height="30" rx="15" fill="#0E7A43"/><text x="224" y="316" text-anchor="middle" font-family="DejaVu Sans Mono, Liberation Mono, monospace" font-size="13" font-weight="bold" fill="#FFFFFF">FILED</text>
+<rect x="178" y="344" width="150" height="9" rx="4.5" fill="#E6F1FE"/>
+<circle cx="400" cy="110" r="46" fill="#0479EE"/><path d="M380 110l14 14 28-30" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="400" y="250" width="150" height="170" rx="14" fill="#0A2A55"/><rect x="416" y="266" width="118" height="40" rx="8" fill="#9CC9F8"/>
+<g fill="#0479EE"><rect x="416" y="322" width="32" height="26" rx="6"/><rect x="458" y="322" width="32" height="26" rx="6"/><rect x="500" y="322" width="34" height="26" rx="6"/><rect x="416" y="360" width="32" height="26" rx="6"/><rect x="458" y="360" width="32" height="26" rx="6"/></g><rect x="500" y="360" width="34" height="26" rx="6" fill="#FFFFFF"/>
+<ellipse cx="90" cy="292" rx="52" ry="16" fill="#0366D0"/><ellipse cx="90" cy="274" rx="52" ry="16" fill="#0479EE"/><ellipse cx="90" cy="256" rx="52" ry="16" fill="#9CC9F8"/>
+</svg>

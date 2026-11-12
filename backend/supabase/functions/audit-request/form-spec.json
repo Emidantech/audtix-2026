@@ -1,0 +1,676 @@
+{
+ "title": "Audit service request",
+ "enums": {
+  "org_type": [
+   [
+    "company",
+    "Private company"
+   ],
+   [
+    "ngo",
+    "NGO or charity"
+   ],
+   [
+    "financial",
+    "SACCO, MFI or financial institution"
+   ],
+   [
+    "education",
+    "School or university"
+   ],
+   [
+    "government",
+    "Government or public body"
+   ],
+   [
+    "partnership",
+    "Partnership or sole proprietor"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "has_tin": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "preferred_contact": [
+   [
+    "email",
+    "Email"
+   ],
+   [
+    "whatsapp",
+    "WhatsApp"
+   ],
+   [
+    "phone",
+    "Phone call"
+   ]
+  ],
+  "audit_types": [
+   [
+    "statutory",
+    "Statutory (annual) audit"
+   ],
+   [
+    "internal",
+    "Internal audit"
+   ],
+   [
+    "donor",
+    "Donor or grant audit"
+   ],
+   [
+    "tax_review",
+    "Tax compliance review"
+   ],
+   [
+    "books_review",
+    "Books and accounts review"
+   ],
+   [
+    "payroll",
+    "Payroll audit"
+   ],
+   [
+    "it",
+    "IT and systems audit"
+   ],
+   [
+    "forensic",
+    "Forensic or special investigation"
+   ],
+   [
+    "due_diligence",
+    "Due diligence"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "audit_reason": [
+   [
+    "law",
+    "Required by law or a regulator"
+   ],
+   [
+    "donor",
+    "Required by a donor or funder"
+   ],
+   [
+    "lender",
+    "Bank or lender request"
+   ],
+   [
+    "owners",
+    "Owners, board or shareholders"
+   ],
+   [
+    "investor",
+    "Investor or buyer due diligence"
+   ],
+   [
+    "own",
+    "We want to check our own controls"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "year_end": [
+   [
+    "30_june",
+    "30 June"
+   ],
+   [
+    "31_december",
+    "31 December"
+   ],
+   [
+    "other",
+    "Another date"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "timeline": [
+   [
+    "two_weeks",
+    "Within 2 weeks"
+   ],
+   [
+    "one_month",
+    "Within a month"
+   ],
+   [
+    "three_months",
+    "Within 3 months"
+   ],
+   [
+    "flexible",
+    "No fixed date"
+   ]
+  ],
+  "prior_audit": [
+   [
+    "first",
+    "This is our first audit"
+   ],
+   [
+    "same_auditor",
+    "Audited before, staying with the same auditor"
+   ],
+   [
+    "changing",
+    "Audited before, changing auditor"
+   ],
+   [
+    "extra",
+    "Audited before, this is an extra review"
+   ]
+  ],
+  "business_sector": [
+   [
+    "retail",
+    "Retail"
+   ],
+   [
+    "wholesale",
+    "Wholesale"
+   ],
+   [
+    "construction",
+    "Construction"
+   ],
+   [
+    "manufacturing",
+    "Manufacturing"
+   ],
+   [
+    "agriculture",
+    "Agriculture"
+   ],
+   [
+    "ict",
+    "ICT"
+   ],
+   [
+    "health",
+    "Health"
+   ],
+   [
+    "hospitality",
+    "Hospitality"
+   ],
+   [
+    "education",
+    "Education"
+   ],
+   [
+    "transport",
+    "Transport"
+   ],
+   [
+    "professional_services",
+    "Professional services"
+   ],
+   [
+    "ngo",
+    "NGO"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "turnover_band": [
+   [
+    "under_10m",
+    "Under UGX 10 million"
+   ],
+   [
+    "10m_50m",
+    "UGX 10 to 50 million"
+   ],
+   [
+    "50m_150m",
+    "UGX 50 to 150 million"
+   ],
+   [
+    "150m_300m",
+    "UGX 150 to 300 million"
+   ],
+   [
+    "300m_1bn",
+    "UGX 300 million to 1 billion"
+   ],
+   [
+    "over_1bn",
+    "Over UGX 1 billion"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "employees_band": [
+   [
+    "none",
+    "No employees"
+   ],
+   [
+    "1_5",
+    "1 to 5"
+   ],
+   [
+    "6_20",
+    "6 to 20"
+   ],
+   [
+    "21_50",
+    "21 to 50"
+   ],
+   [
+    "over_50",
+    "More than 50"
+   ]
+  ],
+  "locations": [
+   [
+    "one",
+    "One office or site"
+   ],
+   [
+    "several",
+    "Several sites in Uganda"
+   ],
+   [
+    "regional",
+    "Operations in other countries too"
+   ]
+  ],
+  "bookkeeping": [
+   [
+    "software",
+    "Accounting software"
+   ],
+   [
+    "spreadsheets_paper",
+    "Spreadsheets or paper books"
+   ],
+   [
+    "none",
+    "No records yet"
+   ]
+  ],
+  "books_status": [
+   [
+    "up_to_date",
+    "Books are up to date"
+   ],
+   [
+    "behind",
+    "Some months are not yet posted"
+   ],
+   [
+    "none",
+    "No proper books yet"
+   ]
+  ],
+  "donor_funded": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ]
+  ],
+  "vat_registered": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "heard_from": [
+   [
+    "social",
+    "Social media"
+   ],
+   [
+    "email",
+    "Email"
+   ],
+   [
+    "referral",
+    "Referral"
+   ],
+   [
+    "event",
+    "Event or training"
+   ],
+   [
+    "search",
+    "Online search"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ]
+ },
+ "fields": [
+  {
+   "name": "org_type",
+   "label": "Type of organisation",
+   "type": "radio",
+   "required": true,
+   "max": 200,
+   "enum": "org_type"
+  },
+  {
+   "name": "org_name",
+   "label": "Organisation name",
+   "type": "text",
+   "required": true,
+   "max": 200
+  },
+  {
+   "name": "contact_person",
+   "label": "Contact person",
+   "type": "text",
+   "required": true,
+   "max": 200
+  },
+  {
+   "name": "job_title",
+   "label": "Job title",
+   "type": "text",
+   "required": false,
+   "max": 120
+  },
+  {
+   "name": "has_tin",
+   "label": "Has a URA TIN",
+   "type": "radio",
+   "required": true,
+   "max": 200,
+   "enum": "has_tin"
+  },
+  {
+   "name": "tin",
+   "label": "TIN",
+   "type": "tin",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "has_tin",
+    "equals": "yes"
+   }
+  },
+  {
+   "name": "reg_number",
+   "label": "Registration number",
+   "type": "text",
+   "required": false,
+   "max": 60
+  },
+  {
+   "name": "email",
+   "label": "Email",
+   "type": "email",
+   "required": true,
+   "max": 254
+  },
+  {
+   "name": "phone",
+   "label": "Phone or WhatsApp",
+   "type": "phone",
+   "required": true,
+   "max": 30
+  },
+  {
+   "name": "preferred_contact",
+   "label": "Preferred contact method",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "preferred_contact"
+  },
+  {
+   "name": "location",
+   "label": "City or town",
+   "type": "text",
+   "required": false,
+   "max": 120
+  },
+  {
+   "name": "audit_types",
+   "label": "Audit services needed",
+   "type": "checks",
+   "required": true,
+   "max": 200,
+   "enum": "audit_types"
+  },
+  {
+   "name": "other_audit",
+   "label": "Other audit service",
+   "type": "text",
+   "required": true,
+   "max": 200,
+   "show": {
+    "field": "audit_types",
+    "includes": "other"
+   }
+  },
+  {
+   "name": "audit_reason",
+   "label": "Why the audit is needed",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "audit_reason"
+  },
+  {
+   "name": "audit_period",
+   "label": "Period to be audited",
+   "type": "text",
+   "required": true,
+   "max": 200
+  },
+  {
+   "name": "year_end",
+   "label": "Financial year end",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "year_end"
+  },
+  {
+   "name": "timeline",
+   "label": "When it is needed",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "timeline"
+  },
+  {
+   "name": "prior_audit",
+   "label": "Audit history",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "prior_audit"
+  },
+  {
+   "name": "business_sector",
+   "label": "Sector",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "business_sector"
+  },
+  {
+   "name": "turnover_band",
+   "label": "Annual turnover",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "turnover_band"
+  },
+  {
+   "name": "employees_band",
+   "label": "Employees",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "employees_band"
+  },
+  {
+   "name": "locations",
+   "label": "Sites and locations",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "locations"
+  },
+  {
+   "name": "bookkeeping",
+   "label": "How records are kept",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "bookkeeping"
+  },
+  {
+   "name": "accounting_software",
+   "label": "Accounting software",
+   "type": "text",
+   "required": false,
+   "max": 120,
+   "show": {
+    "field": "bookkeeping",
+    "equals": "software"
+   }
+  },
+  {
+   "name": "books_status",
+   "label": "State of the books",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "books_status"
+  },
+  {
+   "name": "vat_registered",
+   "label": "VAT registered",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "vat_registered"
+  },
+  {
+   "name": "donor_funded",
+   "label": "Donor or grant funded",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "donor_funded"
+  },
+  {
+   "name": "donor_names",
+   "label": "Donors or funders",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "show": {
+    "field": "donor_funded",
+    "equals": "yes"
+   }
+  },
+  {
+   "name": "notes",
+   "label": "Other notes",
+   "type": "textarea",
+   "required": false,
+   "max": 2000
+  },
+  {
+   "name": "heard_from",
+   "label": "Heard about us from",
+   "type": "select",
+   "required": false,
+   "max": 200,
+   "enum": "heard_from"
+  }
+ ],
+ "documents": [
+  [
+   "financial_statements",
+   "Financial statements or management accounts"
+  ],
+  [
+   "trial_balance",
+   "Trial balance or general ledger"
+  ],
+  [
+   "bank_statements",
+   "Bank statements"
+  ],
+  [
+   "tax_returns",
+   "Tax returns and URA correspondence"
+  ],
+  [
+   "registration",
+   "Registration documents (certificate, TIN, memorandum)"
+  ],
+  [
+   "previous_audit",
+   "Previous audit report and management letter"
+  ],
+  [
+   "donor_agreements",
+   "Donor agreements and grant reports"
+  ],
+  [
+   "other_docs",
+   "Other supporting documents"
+  ]
+ ],
+ "upload": {
+  "maxFileBytes": 5242880,
+  "maxTotalBytes": 15728640,
+  "maxFilesPerType": 3,
+  "types": [
+   "application/pdf",
+   "image/jpeg",
+   "image/png"
+  ]
+ }
+}

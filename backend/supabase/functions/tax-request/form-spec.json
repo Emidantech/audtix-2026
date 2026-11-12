@@ -1,0 +1,558 @@
+{
+ "enums": {
+  "applicant_type": [
+   [
+    "individual",
+    "Individual"
+   ],
+   [
+    "business",
+    "Company or business"
+   ],
+   [
+    "organisation",
+    "NGO or other organisation"
+   ]
+  ],
+  "has_tin": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "preferred_contact": [
+   [
+    "email",
+    "Email"
+   ],
+   [
+    "whatsapp",
+    "WhatsApp"
+   ],
+   [
+    "phone",
+    "Phone call"
+   ]
+  ],
+  "year_end": [
+   [
+    "30_june",
+    "30 June"
+   ],
+   [
+    "31_december",
+    "31 December"
+   ],
+   [
+    "other",
+    "Another date"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "turnover_band": [
+   [
+    "under_10m",
+    "Under UGX 10 million"
+   ],
+   [
+    "10m_50m",
+    "UGX 10 to 50 million"
+   ],
+   [
+    "50m_150m",
+    "UGX 50 to 150 million"
+   ],
+   [
+    "150m_300m",
+    "UGX 150 to 300 million"
+   ],
+   [
+    "300m_1bn",
+    "UGX 300 million to 1 billion"
+   ],
+   [
+    "over_1bn",
+    "Over UGX 1 billion"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "employees_band": [
+   [
+    "none",
+    "No employees"
+   ],
+   [
+    "1_5",
+    "1 to 5"
+   ],
+   [
+    "6_20",
+    "6 to 20"
+   ],
+   [
+    "21_50",
+    "21 to 50"
+   ],
+   [
+    "over_50",
+    "More than 50"
+   ]
+  ],
+  "vat_registered": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "unsure",
+    "Not sure"
+   ]
+  ],
+  "bookkeeping": [
+   [
+    "software",
+    "Accounting software"
+   ],
+   [
+    "spreadsheets_paper",
+    "Spreadsheets or paper books"
+   ],
+   [
+    "none",
+    "No records yet"
+   ]
+  ],
+  "ura_notice": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ]
+  ],
+  "timeline": [
+   [
+    "urgent",
+    "Urgent, within a week"
+   ],
+   [
+    "month",
+    "Within a month"
+   ],
+   [
+    "flexible",
+    "Flexible"
+   ]
+  ],
+  "heard_from": [
+   [
+    "social",
+    "Social media"
+   ],
+   [
+    "email",
+    "Email"
+   ],
+   [
+    "referral",
+    "Referral"
+   ],
+   [
+    "event",
+    "Event or training"
+   ],
+   [
+    "search",
+    "Online search"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "business_sector": [
+   [
+    "retail",
+    "Retail"
+   ],
+   [
+    "wholesale",
+    "Wholesale"
+   ],
+   [
+    "construction",
+    "Construction"
+   ],
+   [
+    "manufacturing",
+    "Manufacturing"
+   ],
+   [
+    "agriculture",
+    "Agriculture"
+   ],
+   [
+    "ict",
+    "ICT"
+   ],
+   [
+    "health",
+    "Health"
+   ],
+   [
+    "hospitality",
+    "Hospitality"
+   ],
+   [
+    "education",
+    "Education"
+   ],
+   [
+    "transport",
+    "Transport"
+   ],
+   [
+    "professional_services",
+    "Professional services"
+   ],
+   [
+    "ngo",
+    "NGO"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "operating_status": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "temporarily_closed",
+    "Temporarily closed"
+   ]
+  ],
+  "years_operating": [
+   [
+    "lt_1",
+    "Less than 1 year"
+   ],
+   [
+    "1_3",
+    "1 to 3 years"
+   ],
+   [
+    "4_7",
+    "4 to 7 years"
+   ],
+   [
+    "gt_7",
+    "More than 7 years"
+   ]
+  ],
+  "filing_status": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "some_missing",
+    "Some returns missing"
+   ],
+   [
+    "never",
+    "Never filed"
+   ]
+  ],
+  "outstanding_years": [
+   [
+    "current_only",
+    "Current year only"
+   ],
+   [
+    "1",
+    "1 year"
+   ],
+   [
+    "2",
+    "2 years"
+   ],
+   [
+    "3",
+    "3 years"
+   ],
+   [
+    "over_3",
+    "More than 3 years"
+   ]
+  ],
+  "payroll_monthly": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ]
+  ],
+  "biggest_challenge": [
+   [
+    "understanding_obligations",
+    "Understanding which taxes apply to us"
+   ],
+   [
+    "records",
+    "Keeping proper records"
+   ],
+   [
+    "late_filing",
+    "Late or missing returns"
+   ],
+   [
+    "penalties",
+    "Penalties, interest or arrears"
+   ],
+   [
+    "ura_dispute",
+    "URA audit, assessment or dispute"
+   ],
+   [
+    "payroll",
+    "Payroll, PAYE and NSSF"
+   ],
+   [
+    "vat",
+    "VAT compliance"
+   ],
+   [
+    "tax_cost",
+    "Tax cost and cash flow"
+   ],
+   [
+    "systems",
+    "Choosing or setting up an accounting system"
+   ],
+   [
+    "no_expertise",
+    "No time or in-house expertise"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "records_available": [
+   [
+    "bank_statements",
+    "Bank statements"
+   ],
+   [
+    "sales_invoices",
+    "Sales invoices"
+   ],
+   [
+    "purchase_invoices",
+    "Purchase invoices"
+   ],
+   [
+    "expense_receipts",
+    "Expense receipts"
+   ],
+   [
+    "payroll_records",
+    "Payroll records"
+   ],
+   [
+    "inventory_records",
+    "Inventory records"
+   ],
+   [
+    "asset_register",
+    "Asset register"
+   ],
+   [
+    "previous_fs",
+    "Previous financial statements"
+   ],
+   [
+    "none",
+    "None"
+   ]
+  ],
+  "ura_communications": [
+   [
+    "audit_notice",
+    "Audit notice"
+   ],
+   [
+    "assessment",
+    "Assessment"
+   ],
+   [
+    "penalty",
+    "Penalty"
+   ],
+   [
+    "demand_notice",
+    "Demand notice"
+   ]
+  ]
+ },
+ "services": [
+  [
+   "annual_return",
+   "Annual income tax return"
+  ],
+  [
+   "provisional_return",
+   "Provisional tax return"
+  ],
+  [
+   "vat_returns",
+   "VAT returns"
+  ],
+  [
+   "paye_nssf",
+   "PAYE and NSSF returns"
+  ],
+  [
+   "withholding",
+   "Withholding tax returns"
+  ],
+  [
+   "tin_registration",
+   "TIN registration"
+  ],
+  [
+   "vat_registration",
+   "VAT registration"
+  ],
+  [
+   "clearance",
+   "Tax clearance certificate"
+  ],
+  [
+   "audit_support",
+   "Tax audit support or objection"
+  ],
+  [
+   "advisory",
+   "Tax advisory"
+  ],
+  [
+   "bookkeeping",
+   "Bookkeeping and accounts preparation"
+  ],
+  [
+   "other",
+   "Other"
+  ],
+  [
+   "financial_statements",
+   "Financial statements"
+  ],
+  [
+   "payroll_management",
+   "Payroll management"
+  ],
+  [
+   "tax_health_check",
+   "Tax health check"
+  ],
+  [
+   "ura_compliance",
+   "URA compliance support"
+  ],
+  [
+   "accounting_setup",
+   "Accounting system setup"
+  ],
+  [
+   "training",
+   "Training"
+  ]
+ ],
+ "documents": [
+  [
+   "certificate_incorporation",
+   "Certificate of Incorporation"
+  ],
+  [
+   "tin_certificate",
+   "TIN certificate"
+  ],
+  [
+   "previous_fs",
+   "Previous financial statements"
+  ],
+  [
+   "previous_returns",
+   "Previous tax returns"
+  ],
+  [
+   "bank_statements",
+   "Bank statements"
+  ],
+  [
+   "sales_records",
+   "Sales records"
+  ],
+  [
+   "expense_records",
+   "Expense records"
+  ],
+  [
+   "payroll_records",
+   "Payroll records"
+  ],
+  [
+   "ura_notices",
+   "URA notices"
+  ],
+  [
+   "other_supporting",
+   "Other supporting documents"
+  ]
+ ],
+ "upload": {
+  "maxFileBytes": 5242880,
+  "maxTotalBytes": 15728640,
+  "maxFilesPerType": 3,
+  "types": [
+   "application/pdf",
+   "image/jpeg",
+   "image/png"
+  ]
+ }
+}
