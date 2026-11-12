@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
+require_perm('requests.view');
 $pdo = db();
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $s = $pdo->prepare('SELECT r.*, a.full_name AS assignee FROM requests r LEFT JOIN admins a ON a.id = r.assigned_to WHERE r.id = ?'); $s->execute([$id]); $r = $s->fetch();
@@ -8,6 +9,16 @@ if (!$r) { http_response_code(404); page_head('Not found', $admin, 'requests'); 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
+    deny_unless($act === 'delete' ? 'requests.delete' : 'requests.edit', 'request.php?id=' . $id);
+    if ($act === 'delete') {
+        $dir = storage_dir() . '/requests/' . $r['request_id'];
+        if (preg_match('/^(TAX|AUDIT)-\d{4}-[A-Z0-9]+$/', $r['request_id']) && is_dir($dir)) { foreach (glob($dir . '/*') ?: [] as $f) @unlink($f); @rmdir($dir); }
+        $pdo->prepare('DELETE FROM request_files WHERE request_pk = ?')->execute([$id]);
+        $pdo->prepare('DELETE FROM request_events WHERE request_pk = ?')->execute([$id]);
+        $pdo->prepare('DELETE FROM requests WHERE id = ?')->execute([$id]);
+        log_activity((int) $admin['id'], 'request_deleted', $r['request_id']);
+        flash('Request ' . $r['request_id'] . ' deleted.'); redirect('requests.php');
+    }
     if ($act === 'status') {
         $new = (string) ($_POST['status'] ?? '');
         if (isset(STATUSES[$new]) && $new !== $r['status']) {
@@ -30,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('request.php?id=' . $id);
 }
 // First time a request is opened while it is still "new", move it to "in review".
-if ($r['status'] === 'new') {
+if ($r['status'] === 'new' && can('requests.edit')) {
     $pdo->prepare('UPDATE requests SET status = ?, updated_at = ? WHERE id = ? AND status = ?')->execute(['in_review', now(), $id, 'new']);
     $pdo->prepare('INSERT INTO request_events (request_pk, admin_id, event_type, note, created_at) VALUES (?,?,?,?,?)')->execute([$id, $admin['id'], 'status', 'Opened by ' . $admin['full_name'] . ', status set to In review', now()]);
     $r['status'] = 'in_review';
@@ -64,15 +75,20 @@ function fsize(int $n): string { return $n >= 1048576 ? round($n / 1048576, 1) .
       <?php if ($r['contact_person']): ?><div><dt>Contact</dt><dd><?= h($r['contact_person']) ?></dd></div><?php endif; ?>
       <div><dt>Email</dt><dd><a href="mailto:<?= h($r['email']) ?>"><?= h($r['email']) ?></a></dd></div>
       <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $r['phone'])) ?>"><?= h($r['phone']) ?></a> &middot; <a href="https://wa.me/<?= h(preg_replace('/\D/', '', $r['phone'])) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div></dl></div></div>
+    <?php if (can('requests.edit')): ?>
     <div class="card"><div class="card-header"><h3 class="card-title">Status and assignment</h3></div><div class="card-body">
       <form method="post" class="d-flex gap-2 mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="status">
         <select name="status" class="form-select form-select-sm" aria-label="Status"><?php foreach (STATUSES as $k => $v): ?><option value="<?= $k ?>"<?= $r['status'] === $k ? ' selected' : '' ?>><?= h($v) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-primary text-nowrap">Update</button></form>
       <form method="post" class="d-flex gap-2"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="assign">
         <select name="assigned_to" class="form-select form-select-sm" aria-label="Assigned to"><option value="0">Not assigned</option><?php foreach ($admins as $a): ?><option value="<?= (int) $a['id'] ?>"<?= (int) $r['assigned_to'] === (int) $a['id'] ? ' selected' : '' ?>><?= h($a['full_name']) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-outline-primary text-nowrap">Assign</button></form></div></div>
+    <?php endif; ?>
     <div class="card"><div class="card-header"><h3 class="card-title">Internal notes and history</h3></div><div class="card-body">
-      <form method="post" class="mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn btn-sm btn-primary">Add note</button></form>
+      <?php if (can('requests.edit')): ?><form method="post" class="mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn btn-sm btn-primary">Add note</button></form><?php endif; ?>
       <ul class="timeline-list"><?php foreach ($events as $e): ?><li class="ev-<?= h($e['event_type']) ?>"><?= h($e['note']) ?><small><?= h($e['full_name'] ?: 'System') ?> &middot; <?= h(eat($e['created_at'])) ?></small></li><?php endforeach; ?>
         <li>Request received<small>Website &middot; <?= h(eat($r['created_at'])) ?></small></li></ul></div></div>
+    <?php if (can('requests.delete')): ?>
+    <div class="card card-outline card-danger"><div class="card-body"><form method="post" class="d-flex align-items-center justify-content-between gap-2" data-confirm="Delete <?= h($r['request_id']) ?> permanently, with its documents and history? This cannot be undone."><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="delete"><span class="small text-secondary">Delete this request and its documents permanently.</span><button class="btn btn-sm btn-danger text-nowrap"><i class="bi bi-trash3"></i> Delete</button></form></div></div>
+    <?php endif; ?>
   </div>
 </div>
 <?php page_foot();

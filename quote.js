@@ -93,13 +93,12 @@
   }
   function renderHeader() {
     var svc = SPEC.services[SERVICE];
-    var sw = $("#q-switch");
-    sw.innerHTML = '<span class="q-sw-l">Service</span>' + Object.keys(SPEC.services).map(function (k) {
-      var s = SPEC.services[k];
-      return '<a href="quote.html?service=' + k + '"' + (k === SERVICE ? ' class="on" aria-current="page"' : "") + ">" + esc(s.title) + "</a>";
-    }).join("");
     if (!svc) {
-      $("#q-loading").innerHTML = "<p>Choose the service you need a quotation for.</p>";
+      // No (or unknown) service in the link: let the visitor pick one.
+      $("#q-loading").innerHTML = "<p>Choose the service you need a quotation for:</p><div class=\"q-pick\">" + Object.keys(SPEC.services).map(function (k) {
+        var s = SPEC.services[k];
+        return '<a href="quote.html?service=' + k + '"><b>' + esc(s.title) + "</b><span>" + esc(s.short || "") + "</span></a>";
+      }).join("") + "</div>";
       return;
     }
     document.title = "Request a Quotation: " + svc.title + " | Audtix Systems";
@@ -219,7 +218,7 @@
     ev.preventDefault();
     var errs = validate();
     showErrors(errs);
-    if (Object.keys(errs).length) { msg("Please fix the highlighted fields."); return; }
+    if (Object.keys(errs).length) { msg("Please fix the highlighted fields."); if (window.AudtixToast) window.AudtixToast("Please fix the highlighted fields.", "error", 4000); return; }
     var data = collect(), btn = $("#q-send"), label = btn.textContent;
     var fd = new FormData(); fd.append("service", SERVICE); fd.append("data", JSON.stringify(data));
     Array.prototype.forEach.call($("#q-attachments", form).files || [], function (f) { fd.append("attachments[]", f, f.name); });
@@ -233,11 +232,12 @@
         done();
         if (x.s === 200 && x.j.ok) {
           popup(x.j, data.full_name);
+          if (window.AudtixToast) window.AudtixToast("Your quotation request was sent. Quote number " + x.j.quote_no + ".", "ok", 8000);
           form.reset(); started = Date.now(); $('[data-list="attachments"]', form).innerHTML = "";
           $$(".q-ibody", form).forEach(function (b) { $$(".q-irow", b).slice(1).forEach(function (r) { r.remove(); }); });
           sync(); return;
         }
-        if (x.s === 422 && x.j.errors) { showErrors(x.j.errors); return msg(x.j.errors.form || "Please fix the highlighted fields."); }
+        if (x.s === 422 && x.j.errors) { showErrors(x.j.errors); if (window.AudtixToast) window.AudtixToast("Please fix the highlighted fields.", "error"); return msg(x.j.errors.form || "Please fix the highlighted fields."); }
         if (x.s === 413) { setErr("attachments", "The files are too large. Remove some and try again."); return msg("Please fix the highlighted fields."); }
         if (x.s === 429) return msg("Too many requests from this network in the last hour. Please try later, or " + wa + ".");
         msg("Sorry, something went wrong on our side. Please try again, or " + wa + ".");

@@ -1,7 +1,7 @@
-# Only the two public endpoints are reachable. Everything else here is code or secrets.
-<FilesMatch "^(?!(submit|quote)\.php$).*$">
+# Only the public endpoints are reachable. Everything else here is code or secrets.
+<FilesMatch "^(?!(submit|quote|posts|site)\.php$).*$">
   Require all denied
 </FilesMatch>
-<FilesMatch "^(submit|quote)\.php$">
+<FilesMatch "^(submit|quote|posts|site)\.php$">
   Require all granted
 </FilesMatch>

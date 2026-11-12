@@ -118,6 +118,7 @@
       waA.href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(text);
       sent.classList.add('show');
       copyNote.textContent = '';
+      if (window.AudtixToast) window.AudtixToast('Your message is ready. Choose email or WhatsApp below to send it.', 'info');
       sent.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     copyB.addEventListener('click', function () {
@@ -135,4 +136,41 @@
       catch (err) { done('Select the text and copy it'); }
     });
   });
+})();
+
+/* ---------- Toast messages: AudtixToast("Sent!", "ok" | "error" | "info") ---------- */
+(function () {
+  var box = null;
+  window.AudtixToast = function (msg, kind, ms) {
+    if (!box) { box = document.createElement('div'); box.className = 'toasts'; box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+    var t = document.createElement('div'); t.className = 'toast ' + (kind || 'ok');
+    var ic = { ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', error: '<path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/>', info: '<path d="M12 11v6M12 7.5v.5"/><circle cx="12" cy="12" r="9"/>' }[kind || 'ok'];
+    t.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ic + '</svg><span></span><button type="button" aria-label="Dismiss">&times;</button>';
+    t.querySelector('span').textContent = msg;
+    var gone = function () { t.classList.add('out'); setTimeout(function () { t.remove(); }, 250); };
+    t.querySelector('button').addEventListener('click', gone);
+    box.appendChild(t);
+    setTimeout(gone, ms || 6000);
+  };
+})();
+
+/* ---------- Floating "Request a quote" button (all pages except the forms themselves) ---------- */
+(function () {
+  if (document.querySelector('.rq-form, #q-form')) return;
+  var services = [['Tax service', 'request-tax.html'], ['Audit service', 'request-audit.html'], ['ERP deployment', 'quote.html?service=erp'], ['Custom fintech systems', 'quote.html?service=custom'],
+    ['URA system integration', 'quote.html?service=ura'], ['Cyber security', 'quote.html?service=cyber'], ['Software development', 'quote.html?service=dev'], ['Networking', 'quote.html?service=net'],
+    ['Enterprise advisory', 'quote.html?service=adv'], ['ICT hardware', 'quote.html?service=ict']];
+  var w = document.createElement('div'); w.className = 'fab';
+  w.innerHTML = '<div class="fab-panel" id="fab-panel" role="menu" hidden><b>What do you need?</b>' + services.map(function (s) { return '<a role="menuitem" href="' + s[1] + '">' + s[0] + '<span aria-hidden="true">→</span></a>'; }).join('') +
+    '<a role="menuitem" class="fab-wa" href="https://wa.me/256701287388" target="_blank" rel="noopener noreferrer">Not sure? WhatsApp us</a></div>' +
+    '<button type="button" class="fab-btn" aria-expanded="false" aria-controls="fab-panel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7M9 17h5"/></svg><span>Request a quote</span></button>';
+  document.body.appendChild(w);
+  var btn = w.querySelector('.fab-btn'), panel = w.querySelector('.fab-panel');
+  function set(open) { panel.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); w.classList.toggle('open', open); }
+  btn.addEventListener('click', function (e) { e.stopPropagation(); set(panel.hidden); if (!panel.hidden) panel.querySelector('a').focus(); });
+  document.addEventListener('click', function (e) { if (!w.contains(e.target)) set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { set(false); btn.focus(); } });
+  // stay clear of the footer's last line on small screens
+  var foot = document.querySelector('footer.site');
+  if (foot && 'IntersectionObserver' in window) new IntersectionObserver(function (es) { w.classList.toggle('at-foot', es[0].isIntersecting); }, { rootMargin: '0px 0px -40px 0px' }).observe(foot.querySelector('.fbase') || foot);
 })();

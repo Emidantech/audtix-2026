@@ -1,14 +1,16 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
-$pdo = db(); $super = $admin['role'] === 'super_admin'; $me = (int) $admin['id'];
+require_perm('quotes.view');
+$pdo = db(); $me = (int) $admin['id'];
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $s = $pdo->prepare('SELECT q.*, a.full_name AS assignee, rb.full_name AS responder, cb.full_name AS creator FROM quotes q LEFT JOIN admins a ON a.id = q.assigned_to LEFT JOIN admins rb ON rb.id = q.responded_by LEFT JOIN admins cb ON cb.id = q.created_by WHERE q.id = ?');
 $s->execute([$id]); $q = $s->fetch();
 if (!$q) { http_response_code(404); page_head('Not found', $admin, 'quotes:all'); echo '<div class="alert alert-warning">Quotation not found. <a href="quotes.php">Back to quotations</a></div>'; page_foot(); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $act = (string) ($_POST['action'] ?? '');
+    $act = (string) ($_POST['action'] ?? ''); $back = 'quote.php?id=' . $id;
+    deny_unless(['status' => 'quotes.edit', 'assign' => 'quotes.edit', 'note' => 'quotes.edit', 'respond' => 'quotes.respond', 'delete' => 'quotes.delete'][$act] ?? 'quotes.edit', $back);
     if ($act === 'status') {
         $new = (string) ($_POST['status'] ?? '');
         if (isset(QUOTE_STATUSES[$new]) && $new !== $q['status']) {
@@ -63,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         quote_event($pdo, $id, $me, 'response', $line);
         log_activity($me, 'quote_responded', $q['quote_no'], money((string) $amt, $cur));
     } elseif ($act === 'delete') {
-        if (!$super) { flash('Only a super admin can delete quotations.', 'bad'); redirect('quote.php?id=' . $id); }
         quote_delete($pdo, $q, $me);
         flash('Quotation ' . $q['quote_no'] . ' deleted.'); redirect('quotes.php');
     }
@@ -71,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // First time a pending quotation is opened, move it to "in review".
-if ($q['status'] === 'pending') {
+if ($q['status'] === 'pending' && can('quotes.edit')) {
     $pdo->prepare('UPDATE quotes SET status = ?, updated_at = ? WHERE id = ? AND status = ?')->execute(['in_review', now(), $id, 'pending']);
     quote_event($pdo, $id, $me, 'status', 'Opened by ' . $admin['full_name'] . ', status set to In review');
     $q['status'] = 'in_review';
@@ -84,8 +85,8 @@ function fsize(int $n): string { return $n >= 1048576 ? round($n / 1048576, 1) .
 $wa = preg_replace('/\D/', '', $q['phone']); if (str_starts_with($wa, '0')) $wa = '256' . substr($wa, 1);
 
 $actions = '<a class="btn btn-sm btn-outline-secondary" href="quotes.php?service=' . h($q['service']) . '"><i class="bi bi-arrow-left"></i> Back</a>'
-         . '<a class="btn btn-sm btn-outline-primary" href="quote-edit.php?id=' . $id . '"><i class="bi bi-pencil"></i> Edit</a>'
-         . '<a class="btn btn-sm btn-primary" href="#respond"><i class="bi bi-send"></i> ' . ($q['responded_at'] ? 'Send revised quote' : 'Send quotation') . '</a>';
+         . (can('quotes.edit') ? '<a class="btn btn-sm btn-outline-primary" href="quote-edit.php?id=' . $id . '"><i class="bi bi-pencil"></i> Edit</a>' : '')
+         . (can('quotes.respond') ? '<a class="btn btn-sm btn-primary" href="#respond"><i class="bi bi-send"></i> ' . ($q['responded_at'] ? 'Send revised quote' : 'Send quotation') . '</a>' : '');
 page_head($q['quote_no'], $admin, 'quote', [], $actions);
 ?>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -107,6 +108,7 @@ page_head($q['quote_no'], $admin, 'quote', [], $actions);
       <?php if (!$files): ?><div class="card-body text-secondary">No documents yet.</div><?php else: ?><div class="card-body p-0"><table class="table mb-0"><thead><tr><th>From</th><th>File</th><th>Size</th><th>Added</th><th></th></tr></thead><tbody>
       <?php foreach ($files as $f): ?><tr><td><?= $f['kind'] === 'client' ? '<span class="badge text-bg-secondary">Client</span>' : '<span class="badge text-bg-success">Our quotation</span>' ?></td><td><?= h($f['original_name']) ?></td><td><?= h(fsize((int) $f['size_bytes'])) ?></td><td class="small"><?= h(eat($f['created_at'])) ?></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="quote-file.php?id=<?= (int) $f['id'] ?>"><i class="bi bi-download"></i> Download</a></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></div>
 
+    <?php if (can('quotes.respond')): ?>
     <div class="card card-primary card-outline" id="respond"><div class="card-header"><h3 class="card-title"><i class="bi bi-send"></i> <?= $q['responded_at'] ? 'Send a revised quotation' : 'Send the quotation' ?></h3></div><div class="card-body">
       <form method="post" enctype="multipart/form-data" data-confirm="Save this quotation and set the status to Responded?"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="respond">
         <div class="row g-2">
@@ -119,6 +121,7 @@ page_head($q['quote_no'], $admin, 'quote', [], $actions);
         </div>
         <button class="btn btn-primary mt-3"><i class="bi bi-send"></i> Save and send</button>
       </form></div></div>
+    <?php endif; ?>
   </div>
 
   <div class="col-lg-4">
@@ -129,6 +132,7 @@ page_head($q['quote_no'], $admin, 'quote', [], $actions);
       <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $q['phone'])) ?>"><?= h($q['phone']) ?></a> &middot; <a href="https://wa.me/<?= h($wa) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div>
       <?php if ($q['location']): ?><div><dt>Location</dt><dd><?= h($q['location']) ?></dd></div><?php endif; ?></dl></div></div>
 
+    <?php if (can('quotes.edit')): ?>
     <div class="card"><div class="card-header"><h3 class="card-title">Status</h3></div><div class="card-body">
       <div class="d-flex flex-wrap gap-2 mb-3">
         <?php foreach (['approved' => 'Client approved', 'rejected' => 'Client declined', 'completed' => 'Completed', 'cancelled' => 'Cancel'] as $k => $l): if ($q['status'] === $k) continue; ?>
@@ -142,12 +146,13 @@ page_head($q['quote_no'], $admin, 'quote', [], $actions);
       <form method="post"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="assign"><label class="form-label small" for="as">Assigned to</label>
         <div class="input-group input-group-sm"><select id="as" name="assigned_to" class="form-select"><option value="0">Not assigned</option><?php foreach ($admins as $a): ?><option value="<?= (int) $a['id'] ?>"<?= (int) $q['assigned_to'] === (int) $a['id'] ? ' selected' : '' ?>><?= h($a['full_name']) ?></option><?php endforeach; ?></select><button class="btn btn-outline-primary">Save</button></div></form>
     </div></div>
+    <?php endif; ?>
 
     <div class="card"><div class="card-header"><h3 class="card-title">Internal notes and history</h3></div><div class="card-body">
-      <form method="post" class="mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn btn-sm btn-primary">Add note</button></form>
+      <?php if (can('quotes.edit')): ?><form method="post" class="mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn btn-sm btn-primary">Add note</button></form><?php endif; ?>
       <ul class="timeline-list"><?php foreach ($events as $e): ?><li class="ev-<?= h($e['event_type']) ?>"><?= h($e['note']) ?><small><?= h($e['full_name'] ?: 'System') ?> &middot; <?= h(eat($e['created_at'])) ?></small></li><?php endforeach; ?></ul></div></div>
 
-    <?php if ($super): ?>
+    <?php if (can('quotes.delete')): ?>
     <div class="card card-outline card-danger"><div class="card-body"><form method="post" class="d-flex align-items-center justify-content-between gap-2" data-confirm="Delete <?= h($q['quote_no']) ?> permanently, with its documents and history? This cannot be undone."><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="delete"><span class="small text-secondary">Delete this quotation permanently. To keep a record, use Cancel or Spam instead.</span><button class="btn btn-sm btn-danger text-nowrap"><i class="bi bi-trash3"></i> Delete</button></form></div></div>
     <?php endif; ?>
   </div>

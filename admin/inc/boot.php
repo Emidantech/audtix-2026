@@ -63,7 +63,7 @@ function require_login(bool $allowPwChange = false): array {
 }
 function require_super(): array {
     $a = require_login();
-    if ($a['role'] !== 'super_admin') { http_response_code(403); exit('Only the super admin can open this page.'); }
+    if ($a['role'] !== 'super_admin') require_perm('roles.edit');  // shows the "no access" page
     return $a;
 }
 
@@ -82,4 +82,6 @@ function temp_password(): string {
 const STATUS_COLORS = ['new' => 'warning', 'in_review' => 'info', 'awaiting_client' => 'secondary', 'quoted' => 'primary', 'in_progress' => 'primary', 'completed' => 'success', 'closed' => 'success', 'spam' => 'dark'];
 const STATUSES = ['new' => 'New', 'in_review' => 'In review', 'awaiting_client' => 'Waiting for client', 'quoted' => 'Quoted', 'in_progress' => 'In progress', 'completed' => 'Completed', 'closed' => 'Closed', 'spam' => 'Spam'];
 
+require __DIR__ . '/perms.php';
+require __DIR__ . '/uploads.php';
 require __DIR__ . '/layout.php';

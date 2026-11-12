@@ -78,6 +78,7 @@ if ($pdo) {
         quote_event($pdo, $pk, null, 'system', 'Quotation request received from the website');
         $pdo->commit(); $dbOk = true;
         $stored = quote_store_files($pdo, $pk, $quoteNo, $files, 'client');
+        notify_admins($pdo, 'quote', 'quotes', 'New quotation request ' . $quoteNo, $client . ' · ' . $title . ($summary ? ' · ' . $summary : ''), 'quote.php?id=' . $pk);
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); $dbErr = $e->getMessage(); $dbOk = false; }
 }
 if (!$dbOk && $files && is_dir($dir)) {  // keep the files on disk even without the database
@@ -94,9 +95,10 @@ $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color
       . quote_rows_html($rows) . '</div>';
 $att = []; $sum = 0;
 foreach ($stored as $f) { if ($sum + $f['size'] > 14 * 1048576) continue; $sum += $f['size']; $att[] = ['name' => $f['orig'], 'mime' => $f['mime'], 'path' => $f['path']]; }
-[$mailOk, $mailErr] = send_mail($subject, $text, $html, $att, (string) $data['email']);
+$skipMail = $dbOk && !notify_enabled('quote');
+[$mailOk, $mailErr] = $skipMail ? [false, 'Email notifications for quotations are turned off'] : send_mail($subject, $text, $html, $att, (string) $data['email']);
 if ($pdo && $dbOk) {
-    try { $pdo->prepare('UPDATE quotes SET email_status = ?, email_error = ?, updated_at = ? WHERE id = ?')->execute([$mailOk ? 'sent' : 'failed', $mailOk ? null : mb_substr($mailErr, 0, 500), now(), $pk]); } catch (Throwable $e) {}
+    try { $pdo->prepare('UPDATE quotes SET email_status = ?, email_error = ?, updated_at = ? WHERE id = ?')->execute([$mailOk ? 'sent' : ($skipMail ? 'pending' : 'failed'), $mailOk ? null : mb_substr($mailErr, 0, 500), now(), $pk]); } catch (Throwable $e) {}
 }
 if (!$dbOk && is_dir($dir)) @file_put_contents("$dir/status.txt", "db=failed ($dbErr)\nemail=" . ($mailOk ? 'sent' : "failed ($mailErr)") . "\n");
 

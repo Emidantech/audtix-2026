@@ -1,7 +1,8 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
-$pdo = db(); $super = $admin['role'] === 'super_admin';
+require_perm('quotes.view');
+$pdo = db();
 $services = quote_services();
 
 /* ---------- bulk actions ---------- */
@@ -12,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$ids) { flash('Select at least one quotation.', 'bad'); redirect($back); }
     $in = implode(',', array_fill(0, count($ids), '?'));
     if (isset(QUOTE_STATUSES[$act])) {
+        deny_unless('quotes.edit', $back);
         $rows = $pdo->prepare("SELECT id, quote_no, status FROM quotes WHERE id IN ($in)"); $rows->execute($ids);
         $n = 0;
         foreach ($rows->fetchAll() as $q) {
@@ -22,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         flash($n . ' quotation' . ($n === 1 ? '' : 's') . ' set to ' . QUOTE_STATUSES[$act] . '.');
     } elseif ($act === 'delete') {
-        if (!$super) { flash('Only a super admin can delete quotations.', 'bad'); redirect($back); }
+        deny_unless('quotes.delete', $back);
         $rows = $pdo->prepare("SELECT id, quote_no FROM quotes WHERE id IN ($in)"); $rows->execute($ids);
         foreach ($rows->fetchAll() as $q) quote_delete($pdo, $q, (int) $admin['id']);
         flash(count($ids) . ' quotation' . (count($ids) === 1 ? '' : 's') . ' deleted.');
@@ -52,7 +54,7 @@ function qs(array $o): string { return 'quotes.php?' . http_build_query(array_fi
 $base = ['service' => $svc, 'q' => $q, 'mine' => $mine ? '1' : ''];
 $self = qs($base + ['status' => $st, 'page' => $page > 1 ? $page : '']);
 $title = ($svc ? $services[$svc]['title'] . ' quotations' : 'Quotations') . ($st ? ': ' . QUOTE_STATUSES[$st] : '');
-page_head($title, $admin, $svc ? 'service:' . $svc : 'quotes:' . ($st ?: 'all'), [], '<a class="btn btn-primary btn-sm" href="quote-edit.php' . ($svc ? '?service=' . h($svc) : '') . '"><i class="bi bi-plus-lg"></i> New quotation</a>');
+page_head($title, $admin, $svc ? 'service:' . $svc : 'quotes:' . ($st ?: 'all'), [], can('quotes.add') ? '<a class="btn btn-primary btn-sm" href="quote-edit.php' . ($svc ? '?service=' . h($svc) : '') . '"><i class="bi bi-plus-lg"></i> New quotation</a>' : '');
 ?>
 <div class="card">
   <div class="card-header pb-0 border-bottom-0">
@@ -73,13 +75,13 @@ page_head($title, $admin, $svc ? 'service:' . $svc : 'quotes:' . ($st ?: 'all'),
   <form method="post"><?= csrf_field() ?><input type="hidden" name="back" value="<?= h($self) ?>">
   <div id="bulk-bar" class="d-none px-3 py-2 bg-body-tertiary border-top"><div class="d-flex flex-wrap gap-2 align-items-center">
     <span class="small"><b data-count>0</b> selected</span>
-    <select name="bulk" class="form-select form-select-sm w-auto" aria-label="Bulk action"><option value="">Choose an action</option><optgroup label="Set status"><?php foreach (QUOTE_STATUSES as $k => $v): ?><option value="<?= $k ?>"><?= h($v) ?></option><?php endforeach; ?></optgroup><?php if ($super): ?><option value="delete">Delete permanently</option><?php endif; ?></select>
+    <select name="bulk" class="form-select form-select-sm w-auto" aria-label="Bulk action"><option value="">Choose an action</option><?php if (can('quotes.edit')): ?><optgroup label="Set status"><?php foreach (QUOTE_STATUSES as $k => $v): ?><option value="<?= $k ?>"><?= h($v) ?></option><?php endforeach; ?></optgroup><?php endif; ?><?php if (can('quotes.delete')): ?><option value="delete">Delete permanently</option><?php endif; ?></select>
     <button class="btn btn-sm btn-outline-primary" data-confirm="Apply this action to the selected quotations?">Apply</button>
   </div></div>
   <div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mb-0">
-    <thead><tr><th class="chk-col"><input class="form-check-input" type="checkbox" data-check-all="ids[]" aria-label="Select all"></th><th>Quote no.</th><th>Service</th><th>Client</th><th>Request</th><th>Status</th><th>Quoted</th><th>Assigned</th><th>Received</th></tr></thead><tbody>
+    <thead><tr><?php $bulk = can('quotes.edit') || can('quotes.delete'); ?><th class="chk-col"><?php if ($bulk): ?><input class="form-check-input" type="checkbox" data-check-all="ids[]" aria-label="Select all"><?php endif; ?></th><th>Quote no.</th><th>Service</th><th>Client</th><th>Request</th><th>Status</th><th>Quoted</th><th>Assigned</th><th>Received</th></tr></thead><tbody>
     <?php foreach ($list as $r): ?><tr>
-      <td><input class="form-check-input" type="checkbox" name="ids[]" value="<?= (int) $r['id'] ?>" aria-label="Select <?= h($r['quote_no']) ?>"></td>
+      <td><?php if ($bulk): ?><input class="form-check-input" type="checkbox" name="ids[]" value="<?= (int) $r['id'] ?>" aria-label="Select <?= h($r['quote_no']) ?>"><?php endif; ?></td>
       <td class="mono text-nowrap"><a href="quote.php?id=<?= (int) $r['id'] ?>"><?= h($r['quote_no']) ?></a><?= $r['source'] === 'admin' ? ' <i class="bi bi-person-badge text-secondary" title="Entered by an admin"></i>' : '' ?><?= $r['email_status'] === 'failed' ? ' <i class="bi bi-envelope-x text-danger" title="Email copy failed"></i>' : '' ?></td>
       <td class="small"><span class="tag"><?= h(quote_service_tag($r['service'])) ?></span><br><?= h(quote_service_title($r['service'])) ?></td>
       <td><b><?= h($r['company'] ?: $r['client_name']) ?></b><br><span class="text-secondary small"><?= $r['company'] ? h($r['client_name']) . ' &middot; ' : '' ?><?= h($r['email']) ?></span></td>
