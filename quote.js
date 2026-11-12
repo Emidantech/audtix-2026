@@ -106,6 +106,8 @@
     $("#q-eyebrow").textContent = svc.eyebrow || svc.title;
     $("#q-title").textContent = "Request a quotation: " + svc.title;
     $("#q-intro").textContent = svc.intro;
+    var ill = { erp: "erp", custom: "erp", dev: "erp", ura: "tax", cyber: "security", net: "security", adv: "tools", ict: "hardware" }[SERVICE];
+    if (ill && $("#q-illus")) { $("#q-illus").src = "img/" + ill + ".svg"; $("#q-illus").alt = svc.title; }
   }
 
   /* ---------- reading values and show rules ---------- */
@@ -250,9 +252,12 @@
   var ALIAS = { hardware: "ict", "ict-hardware": "ict", fintech: "custom", "custom-fintech": "custom", software: "dev", development: "dev",
     networking: "net", network: "net", advisory: "adv", "enterprise-advisory": "adv", security: "cyber", "cyber-security": "cyber", efris: "ura", "ura-integration": "ura" };
   function pickService() {
-    var q = new URLSearchParams(location.search), v = q.get("service") || q.get("s") || location.hash.replace(/^#/, "") || "";
-    v = decodeURIComponent(v).trim().toLowerCase();
-    return ALIAS[v] || v;
+    var q = new URLSearchParams(location.search), v = (q.get("service") || q.get("s") || "").trim().toLowerCase();
+    var h = decodeURIComponent(location.hash.replace(/^#/, "")).trim().toLowerCase();
+    v = ALIAS[v] || v;
+    // #erp works too, but only for real service names (#q-form is just a jump to the form)
+    if (!v && h && window.QUOTE_FORMS && window.QUOTE_FORMS.services[ALIAS[h] || h]) v = ALIAS[h] || h;
+    return v;
   }
   function start() {
     SPEC = window.QUOTE_FORMS;
@@ -263,7 +268,7 @@
     return true;
   }
   function failed() { $("#q-loading").innerHTML = '<p>The form could not be loaded. Please reload the page, email <a href="mailto:info@audtix.com">info@audtix.com</a> or WhatsApp +256 701 287 388.</p>'; }
-  window.addEventListener("hashchange", function () { if (SPEC) location.reload(); });
+  window.addEventListener("hashchange", function () { if (SPEC && pickService() !== SERVICE) location.reload(); });
   if (!start()) {
     // quote-forms.js did not load (old cached page, slow network): load it now, then try once more
     var sc = document.createElement("script");
