@@ -5,3 +5,7 @@ node_modules/
 .DS_Store
 *.pyc
 supabase/.temp/
+api/config.php
+audtix-config.php
+private/
+audtix-storage/

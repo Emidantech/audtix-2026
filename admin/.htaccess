@@ -1,0 +1,10 @@
+# Admin panel: no directory listing, never cached, never indexed, no framing.
+Options -Indexes
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow"
+  Header set Cache-Control "no-store"
+  Header set X-Frame-Options "DENY"
+</IfModule>
+<FilesMatch "\.(inc|sql|json|log|txt)$">
+  Require all denied
+</FilesMatch>

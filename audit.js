@@ -90,6 +90,10 @@
     return o;
   }
 
+  function sectionOf(w) {
+    var d = w.closest("details.qsec"); if (d) { var l = $(".ql", d), t = $(".qt", d); return "Questionnaire " + (l ? l.textContent.trim() + ": " : "") + (t ? t.textContent.trim() : ""); }
+    var st = w.closest(".rq-step"), h = st && $("h2,h3,legend", st); return h ? h.textContent.replace(/\s+/g, " ").trim() : "";
+  }
   function summary() {
     var rows = [];
     $$("[data-f][data-label]", form).forEach(function (w) {
@@ -100,54 +104,26 @@
       else if ($("input[type=radio]", w)) { var r = $("input:checked", w); v = r ? r.parentNode.textContent.trim() : ""; }
       else { var i = $("input,textarea", w); v = i ? i.value.trim() : ""; }
       if (n === "tin" && !v && val("has_tin") === "yes") v = "Not provided";
-      if (v) rows.push(label + ": " + v);
+      if (v) rows.push([label, v, sectionOf(w)]);
     });
-    return "New audit service request\n\n" + rows.join("\n");
+    return rows;
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-  var done = document.getElementById("rq-done");
-  function show(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; done.focus(); window.scrollTo({ top: done.getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" }); }
-  function success(ref, n) {
-    show('<h2>Thank you, your request is in</h2><p>Reference</p><div class="ref">' + esc(ref) + '</div><p>We received your form' + (n ? ' and ' + n + ' document' + (n === 1 ? '' : 's') : '') + '. Our audit team will contact you using the method you chose. A confirmation email is on its way to you. Quote the reference if you write to us.</p><div class="row"><a class="btn" href="index.html">Back to home</a><a class="btn ghost" href="tools.html">Try the free tools</a></div>');
-  }
-  function fallback(o, why) {
-    var text = summary(), to = cfg.notifyTo || "info@audtix.com", cc = cfg.notifyCc || "audtixsystem@gmail.com";
-    var mail = "mailto:" + to + "?cc=" + encodeURIComponent(cc) + "&subject=" + encodeURIComponent("Audit service request: " + o.org_name) + "&body=" + encodeURIComponent(text);
-    var wa = "https://wa.me/" + (cfg.whatsapp || "256701287388") + "?text=" + encodeURIComponent(text);
-    show('<h2>One last step to send your request</h2><p>' + esc(why) + ' Your details are ready below. Send them using one of these buttons.</p>' + (allFiles().length ? '<p><b>Your documents are not attached here.</b> Please email them to ' + esc(to) + ' and quote your organisation name.</p>' : '') + '<div class="row"><a class="btn" href="' + mail + '">Send by email</a><a class="btn ghost" href="' + wa + '" target="_blank" rel="noopener noreferrer">Send on WhatsApp</a><button class="btn ghost" type="button" id="rq-copy">Copy details</button></div><pre id="rq-pre">' + esc(text) + '</pre>');
-    var b = document.getElementById("rq-copy");
-    b.addEventListener("click", function () {
-      function pick() { var r = document.createRange(); r.selectNodeContents(document.getElementById("rq-pre")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected, press copy"; }
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { b.textContent = "Copied"; }, pick); else pick();
-    });
-  }
+  function msg(html) { $("#rq-error").innerHTML = html || ""; }
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var errs = validate(), first = null;
     $$("[data-e]", form).forEach(function (e) { var k = e.getAttribute("data-e"); setErr(k, errs[k]); if (errs[k] && !first) first = k; });
-    $("#rq-error").textContent = "";
-    if (first) { var f = wrap(first) || $('[data-e="files"]', form); var i = f && $("input,select,textarea", f); if (i) i.focus(); else if (f && f.scrollIntoView) f.scrollIntoView({ block: "center" }); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
+    msg("");
+    if (first) { var f = wrap(first) || $('[data-e="files"]', form); var i = f && $("input,select,textarea", f); if (i) i.focus(); else if (f && f.scrollIntoView) f.scrollIntoView({ block: "center" }); msg("Please fix the highlighted fields."); return; }
     var o = collect();
-    if (o.website) return success("AUDIT-0000-00000", 0);
-    if (!cfg.auditRequestEndpoint) return fallback(o, "Online delivery is not switched on for this page yet.");
-    var btn = $("#rq-send"); btn.disabled = true; btn.textContent = "Sending...";
-    var fd = new FormData(); fd.append("data", JSON.stringify(o));
-    var fl = allFiles(), nfiles = fl.length;
-    fl.forEach(function (x) { fd.append(x.key, x.file, x.file.name); });
-    var ctl = typeof AbortController !== "undefined" ? new AbortController() : null, to = setTimeout(function () { ctl && ctl.abort(); }, nfiles ? 120000 : 30000);
-    fetch(cfg.auditRequestEndpoint, { method: "POST", body: fd, signal: ctl ? ctl.signal : undefined })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
-      .then(function (x) {
-        clearTimeout(to);
-        if (x.s === 200 && x.j.ok) return success(x.j.reference, nfiles);
-        btn.disabled = false; btn.textContent = "Submit request";
-        if (x.s === 422 && x.j.errors) { Object.keys(x.j.errors).forEach(function (k) { setErr(k, x.j.errors[k]); }); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
-        if (x.s === 413) { setErr("files", "The files are too large. Remove some and try again."); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
-        if (x.s === 429) { $("#rq-error").textContent = "Too many requests from this network. Please try again later or WhatsApp us."; return; }
-        fallback(o, "We could not reach our server.");
-      })
-      .catch(function () { clearTimeout(to); btn.disabled = false; btn.textContent = "Submit request"; fallback(o, "We could not reach our server."); });
+    AudtixSubmit.send({
+      form: form, category: "audit", data: o, rows: summary(), files: allFiles(), button: $("#rq-send"), name: o.org_name,
+      onFieldErrors: function (e) { Object.keys(e).forEach(function (k) { setErr(k, e[k]); }); },
+      onMessage: msg,
+      onDone: function () { form.reset(); $$("[data-list]", form).forEach(function (u) { u.innerHTML = ""; }); started = Date.now(); sync(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    });
   });
 })();

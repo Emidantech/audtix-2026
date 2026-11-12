@@ -1,42 +1,44 @@
-# Audtix Systems website and backend kit
+# Audtix Systems website
 
 The website files are at the top level of this repository, so Hostinger Git can deploy them straight into `public_html`.
-The `backend/` folder (Supabase functions, migrations, tests) is never served: `.htaccess` returns 404 for it, for `.git`,
-and for documentation, SQL and TypeScript files.
 
-**Deploying on Hostinger:** hPanel, Websites, Manage, Advanced, Git. Use the SSH address, add the deploy key it shows to the
-GitHub repo (Settings, Deploy keys), branch `main`, and leave the install folder empty. Add the webhook it gives you under
-GitHub Settings, Webhooks for automatic deploys.
+| Folder | What it is | Public? |
+|---|---|---|
+| (top level) | the pages, `request.js`, `audit.js`, `submit.js`, styles | yes |
+| `api/submit.php` | receives the Tax and Audit forms: saves to MySQL **and** emails a copy | only `submit.php` |
+| `admin/` | the admin panel (sign-in required) | yes, behind login |
+| `database/audtix.mysql.sql` | the MySQL database file | never served |
+| `backend/` | the older Supabase kit, no longer used by the request forms (kept for the optional Forex and insights functions) | never served |
+
+## How a request travels
+1. Visitor submits `request-tax.html` or `request-audit.html`. A success card shows the **request ID** (for example `TAX-2026-00001` or `AUDIT-2026-00001`; the first part is the category tag) and a WhatsApp button. Nothing about how data is stored is shown to the visitor.
+2. `api/submit.php` validates the data, then does two independent things:
+   - saves it to MySQL (tables `requests`, `request_files`, `request_events`);
+   - emails a copy to the notify address (info@audtix.com, cc audtixsystem@gmail.com) with the answers and the uploaded documents attached.
+   If one fails the other still happens (the email states when the database save failed, and the admin panel flags requests whose email failed). The files and a `request.json` copy are also kept on disk. The visitor only sees an error if **both** fail.
+3. Admins open `/admin/`, find the request by ID, change its status, assign it, add notes and download the documents.
+
+## Deploying on Hostinger (premium shared hosting)
+1. **Code:** hPanel, Websites, Manage, Advanced, Git. Use the SSH address, add the deploy key it shows to the GitHub repo (Settings, Deploy keys), branch `main`, install folder empty. Add the webhook under GitHub Settings, Webhooks for automatic deploys.
+2. **Database:** hPanel, Databases, MySQL Databases. Create a database and a user (Hostinger prefixes both, for example `u123456789_audtix`). Open phpMyAdmin for it, Import, choose `database/audtix.mysql.sql`. (Download the file from GitHub; it is not served by the website.)
+3. **Email mailbox:** hPanel, Emails, create `no-reply@audtix.com` (SMTP host `smtp.hostinger.com`, port 465, SSL).
+4. **Config file (secrets, never in Git):** copy `api/config.sample.php` to a file called `audtix-config.php` placed **one folder above `public_html`** (File Manager, home folder), and fill in the database, mailbox and a long random `setup_token`. If you cannot place it above `public_html`, name it `api/config.php` instead (the `.htaccess` blocks it).
+5. **First super admin:** open `https://audtix.com/admin/setup.php`, enter the setup token, your name, username, email and a strong password. The page closes itself. Then delete `setup_token` from the config file.
+6. Sign in at `https://audtix.com/admin/`. Under **Admins** you can add more admins (they get a one-time temporary password and must set their own), deactivate or reset them. **Login log** (super admin only) shows every sign-in attempt and admin action.
+7. Submit a test request on both forms and confirm it appears in the panel and arrives by email.
+
+Uploaded documents are stored in `audtix-storage/` one folder above `public_html` (or in `private/` with a deny-all rule if that is not writable). Back this folder up with the database.
+
+## Security notes
+- Passwords are hashed (bcrypt), sessions are HttpOnly and SameSite=Strict, every form has a CSRF token, and an account locks for 15 minutes after 5 wrong passwords (20 failures per network blocks sign-in attempts for 15 minutes).
+- There is no default password anywhere. The SQL file creates no admin.
+- Public forms: honeypot, minimum fill time, 10 submissions per hour per network, PDF/JPG/PNG only (checked by file signature), 5 MB per file, 15 MB total.
+- Times are stored in UTC and shown in East Africa Time.
+
+## Tests
+The PHP code was tested end to end against SQLite (no MySQL server was available while building): form to database to email, database-down, email-down and both-down cases, request numbering, and the full admin flow. `database/audtix.mysql.sql` was written for MySQL 5.7+ / MariaDB 10.4+ but has not been run on a real MySQL server here, so the import in step 2 is the first real check; if phpMyAdmin reports an error, send it over.
 
 ---
-
-# Audtix tax request form: database and email setup
-
-Clients press **Request tax service**, fill `request-tax.html` (no sign-up) and submit. The request is saved in a database and emailed to **info@audtix.com** with a copy to **audtixsystem@gmail.com**. The email carries **one PDF**: the completed form followed by every document the client uploaded (PDF pages appended, photos placed one per page). The client also gets a confirmation with a reference such as AUD-2026-00001.
-
-## What is in this folder
-- `` the website (request-tax.html, request.js, request.css, config.js and all other pages)
-- `backend/supabase/migrations/20261105000000_tax_requests.sql` the database (tables tax_requests and tax_request_events)
-- `backend/supabase/migrations/20261106000000_sme_assessment.sql` the SME assessment questions, the tax_request_files table and a private Storage bucket for the combined PDFs (run it second)
-- `backend/supabase/functions/tax-request/` the function that validates, saves and emails (index.ts, handler.ts, validate.ts, pdf.ts, form-spec.json, .env.example)
-- `backend/supabase/functions/forex-news/` optional headline fetcher for the Forex desk
-- `backend/supabase/functions/fin-updates/` collects Uganda and East Africa institution updates; `_shared/` holds the feed reader and the institution list
-- `backend/tests/` tests that were run while building
-
-## Setup (about 30 minutes)
-1. Create a free project at supabase.com.
-2. Open SQL Editor, paste the first migration and run it, then the second.
-3. Create an account at resend.com, add and verify the domain audtix.com (add the DNS records they show), create an API key.
-4. Install the Supabase CLI, then in a folder containing `backend/supabase`:
-   - `supabase link --project-ref YOUR_REF`
-   - copy `.env.example` to `.env`, fill in RESEND_API_KEY and IP_SALT, set ALLOWED_ORIGINS to your live site address
-   - `supabase secrets set --env-file supabase/functions/tax-request/.env`
-   - `supabase functions deploy tax-request --no-verify-jwt`
-   - (optional) `supabase functions deploy forex-news --no-verify-jwt`
-   - (optional) `supabase functions deploy fin-updates --no-verify-jwt`
-5. Edit `config.js`: set `taxRequestEndpoint` to `https://YOUR_REF.supabase.co/functions/v1/tax-request`, then upload the site.
-
-Until step 5 is done, the form shows a ready-to-send summary with Email (to info@audtix.com, cc audtixsystem@gmail.com), WhatsApp and Copy buttons, so no request is lost.
 
 ## Financial insights centre (Free tools page)
 A section under the tools collects the latest posts from Ugandan and East African institutions: URA, MoFPED, Bank of Uganda, NSSF, URBRA, URSB, UBOS, UNBS, PPDA, KCCA, Uganda Investment Authority, CMA, USE, IRA, plus Kenya (CBK, Treasury, KRA, KNBS), Tanzania (BoT, TRA), Rwanda (BNR, RRA) and the EAC. Visitors can filter by topic and country, and the three newest items also show in the Forex desk sidebar. It needs no attention once set up.
@@ -54,51 +56,3 @@ The Free tools page loads live data every time it is opened and refreshes every 
 - Recommended: deploy `supabase functions deploy forex-news --no-verify-jwt` and put its URL in `config.js` as `newsEndpoint`. Without it the page uses the public rss2json service, which has usage limits.
 - If a feed cannot be reached the page says so. It never shows old figures as current. Last good rates and headlines are kept in the visitor's browser for up to 3 days and 6 hours, and labelled as saved.
 - These feeds are called straight from the visitor's browser, so they only work on the real website. The preview page inside Claude blocks outside connections and shows the "could not be loaded" state.
-
-## Uploads and the combined PDF
-- Accepted: PDF, JPG, PNG. Up to 5 MB per file, 3 files per document type, 15 MB in total (limits are in `form-spec.json`). Word and Excel files are not accepted; clients are told to convert them to PDF.
-- A password-protected or damaged PDF cannot be merged. It is attached to the email separately and the combined PDF says so.
-- Non-Latin characters (for example Chinese names) show as "?" inside the PDF only. The database and the email text keep them.
-- A copy of every combined PDF is kept in the private Storage bucket `tax-request-pdfs` (path in `pdf_path`), so it survives if an email is lost.
-- Resend allows up to 40 MB per email, so the limits above fit comfortably.
-
-## Staff use
-Supabase, Table Editor, `tax_requests`: filter by `status` (new, contacted, in_progress, awaiting_documents, filed, closed, spam), set `assigned_to` and `staff_notes`. `email_status` shows whether the team email went out. `tax_request_events` is the audit trail.
-
-## Changing questions
-Options for dropdowns and services live in `form-spec.json` (keep the SQL CHECK lists in step). A new question with no column can be stored in `payload.extra` without changing the database.
-
-## Notes
-- Questions come from the Google Form content you supplied plus the SME Tax Assessment PDF. Questions already on the form (TIN, employees, records kept, URA notice, services) were not repeated.
-- Tested: SQL on local Postgres 16 (both migrations), handler and PDF merge with simulated database and email, and the form in a real browser sending real files to the real handler code. Not yet tested on a live Supabase project or with real email delivery.
-- Without the backend switched on, uploaded files cannot travel by mailto or WhatsApp, so the page asks the client to email them separately.
-- Collecting TINs and contact details falls under Uganda's Data Protection and Privacy Act 2019. Publish a privacy notice and limit staff access to the tables.
-
-
-## Request for Audit Service form (added November 2026)
-
-A second form, separate from the tax form. It lives at `request-audit.html` and is reached only from the
-"Request for Audit Service" button inside the Audit and assurance card on the home page.
-
-Setup is the same as for the tax form:
-
-1. Run `backend/supabase/migrations/20261110000000_audit_requests.sql` in the Supabase SQL editor (run the two tax migrations first).
-2. Deploy the function: `supabase functions deploy audit-request --no-verify-jwt`. It uses the same secrets as `tax-request`
-   (RESEND_API_KEY, MAIL_FROM, NOTIFY_TO, NOTIFY_CC, ALLOWED_ORIGINS, IP_SALT), so there is nothing new to set.
-3. Paste the function URL into `config.js` as `auditRequestEndpoint`.
-
-Submissions go to info@audtix.com with a copy to audtixsystem@gmail.com. The form and every uploaded file arrive as one PDF.
-Staff can read the data in the `audit_requests` table. The questions live in `functions/audit-request/form-spec.json`
-and drive the web page, the checks and the emails together. Run `node --experimental-strip-types tests/audit.test.mjs` to test it.
-
-Note: the Google Form behind the audit link could not be read automatically, so the questions are a standard audit
-intake. Send the real question list and they can be matched exactly.
-
-
-### Audit questionnaire (added 12 November 2026)
-
-The audit form now includes the full External Audit Client Information Questionnaire as an optional step, in 13
-collapsible sections (A to M), with section N (documents available) and 18 upload slots in the Documents step.
-All of these answers appear in the combined PDF and the notification email under section headings, and are stored in the
-`payload` column of `audit_requests`. Run `backend/supabase/migrations/20261112000000_audit_questionnaire.sql` once to allow the new upload types.
-The questions live in `functions/audit-request/form-spec.json` (generated by the page builder); edit labels or options there.

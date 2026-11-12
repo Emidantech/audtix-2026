@@ -1,0 +1,7 @@
+# Only submit.php is public. Everything else here is code or secrets.
+<FilesMatch "^(?!submit\.php$).*$">
+  Require all denied
+</FilesMatch>
+<Files "submit.php">
+  Require all granted
+</Files>

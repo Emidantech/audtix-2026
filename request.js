@@ -96,55 +96,25 @@
   }
   function summary(o) {
     var rows = [["Applying as", labelFor("applicant_type", o.applicant_type)], ["Name", o.display_name], ["Contact person", o.contact_person], ["Has a TIN", labelFor("has_tin", o.has_tin)], ["TIN", o.tin || (o.has_tin === "yes" ? "Not provided" : "")], ["Registration number", o.reg_number], ["Email", o.email], ["Phone or WhatsApp", o.phone], ["Preferred contact", o.preferred_contact && labelFor("preferred_contact", o.preferred_contact)], ["Location", o.location], ["Services", o.services.map(function (v) { return labelFor("services", v); }).join(", ")], ["Other service", o.other_service], ["Tax periods", o.tax_periods], ["Timeline", o.timeline && labelFor("timeline", o.timeline)], ["Year end", o.year_end && labelFor("year_end", o.year_end)], ["Turnover", o.turnover_band && labelFor("turnover_band", o.turnover_band)], ["Employees", o.employees_band && labelFor("employees_band", o.employees_band)], ["VAT registered", o.vat_registered && labelFor("vat_registered", o.vat_registered)], ["Records", o.bookkeeping && labelFor("bookkeeping", o.bookkeeping)], ["URA notice", o.ura_notice && labelFor("ura_notice", o.ura_notice)], ["Notice details", o.ura_notice_details], ["Notes", o.notes], ["Heard from", o.heard_from && labelFor("heard_from", o.heard_from)], ["Biggest challenge", o.biggest_challenge && labelFor("biggest_challenge", o.biggest_challenge)], ["Business sector", o.business_sector && labelFor("business_sector", o.business_sector)], ["Time in operation", o.years_operating && labelFor("years_operating", o.years_operating)], ["Currently operating", o.operating_status && labelFor("operating_status", o.operating_status)], ["Stopped operating on", o.stopped_on], ["Accounting software", o.accounting_software], ["Records available", (o.records_available || []).map(function (v) { return labelFor("records_available", v); }).join(", ")], ["Filing returns regularly", o.filing_status && labelFor("filing_status", o.filing_status)], ["Years outstanding", o.outstanding_years && labelFor("outstanding_years", o.outstanding_years)], ["URA communication", (o.ura_communications || []).map(function (v) { return labelFor("ura_communications", v); }).join(", ")], ["Payroll every month", o.payroll_monthly && labelFor("payroll_monthly", o.payroll_monthly)], ["Information confirmed true and complete", "Yes"]];
-    return "New tax service request\n\n" + rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ": " + r[1]; }).join("\n");
+    return rows.filter(function (r) { return r[1]; });
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-  var done = document.getElementById("rq-done");
-  function show(html) { form.hidden = true; $(".rq-side").hidden = false; done.innerHTML = html; done.hidden = false; done.focus(); window.scrollTo({ top: done.getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" }); }
-  function success(ref, n) {
-    show('<h2>Thank you, your request is in</h2><p>Reference</p><div class="ref">' + esc(ref) + '</div><p>We received your form' + (n ? ' and ' + n + ' document' + (n === 1 ? '' : 's') : '') + '. Our tax team will contact you using the method you chose. A confirmation email is on its way to you. Quote the reference if you write to us.</p><div class="row"><a class="btn" href="index.html">Back to home</a><a class="btn ghost" href="tools.html">Try the free tools</a></div>');
-  }
-  function fallback(o, why) {
-    var text = summary(o), to = cfg.notifyTo || "info@audtix.com", cc = cfg.notifyCc || "audtixsystem@gmail.com";
-    var mail = "mailto:" + to + "?cc=" + encodeURIComponent(cc) + "&subject=" + encodeURIComponent("Tax service request: " + o.display_name) + "&body=" + encodeURIComponent(text);
-    var wa = "https://wa.me/" + (cfg.whatsapp || "256701287388") + "?text=" + encodeURIComponent(text);
-    show('<h2>One last step to send your request</h2><p>' + esc(why) + ' Your details are ready below. Send them using one of these buttons.</p>' + (allFiles().length ? '<p><b>Your documents are not attached here.</b> Please email them to ' + esc(to) + ' and quote your company name.</p>' : '') + '<p style="display:none"></p><div class="row"><a class="btn" href="' + mail + '">Send by email</a><a class="btn ghost" href="' + wa + '" target="_blank" rel="noopener noreferrer">Send on WhatsApp</a><button class="btn ghost" type="button" id="rq-copy">Copy details</button></div><pre id="rq-pre">' + esc(text) + '</pre>');
-    var b = document.getElementById("rq-copy");
-    b.addEventListener("click", function () {
-      var pre = document.getElementById("rq-pre");
-      function ok() { b.textContent = "Copied"; }
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, function () { sel(); });
-      else sel();
-      function sel() { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected, press copy"; }
-    });
-  }
+  function msg(html) { $("#rq-error").innerHTML = html || ""; }
+  form.addEventListener("input", function () { msg(""); });
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var errs = validate(), first = null;
     ["applicant_type","display_name","contact_person","has_tin","tin","email","phone","services","other_service","tax_periods","files","accuracy_confirmed","consent"].forEach(function (k) { setErr(k, errs[k]); if (errs[k] && !first) first = k; });
-    $("#rq-error").textContent = "";
-    if (first) { var f = $('[data-f="' + first + '"]', form); var i = f && $("input,select,textarea", f); if (i) i.focus(); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
+    msg("");
+    if (first) { var f = $('[data-f="' + first + '"]', form); var i = f && $("input,select,textarea", f); if (i) i.focus(); msg("Please fix the highlighted fields."); return; }
     var o = collect();
-    if (o.website) return success("AUD-0000-00000", 0);
-    if (!cfg.taxRequestEndpoint) return fallback(o, "Online delivery is not switched on for this page yet.");
-    var btn = $("#rq-send"); btn.disabled = true; btn.textContent = "Sending...";
-    var fd = new FormData(); fd.append("data", JSON.stringify(o));
-    var fl = allFiles(), nfiles = fl.length;
-    fl.forEach(function (x) { fd.append(x.key, x.file, x.file.name); });
-    var ctl = typeof AbortController !== "undefined" ? new AbortController() : null, to = setTimeout(function () { ctl && ctl.abort(); }, nfiles ? 120000 : 30000);
-    fetch(cfg.taxRequestEndpoint, { method: "POST", body: fd, signal: ctl ? ctl.signal : undefined })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
-      .then(function (x) {
-        clearTimeout(to);
-        if (x.s === 200 && x.j.ok) return success(x.j.reference, nfiles);
-        btn.disabled = false; btn.textContent = "Submit request";
-        if (x.s === 422 && x.j.errors) { Object.keys(x.j.errors).forEach(function (k) { setErr(k, x.j.errors[k]); }); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
-        if (x.s === 413) { setErr("files", "The files are too large. Remove some and try again."); $("#rq-error").textContent = "Please fix the highlighted fields."; return; }
-        if (x.s === 429) { $("#rq-error").textContent = "Too many requests from this network. Please try again later or WhatsApp us."; return; }
-        fallback(o, "We could not reach our server.");
-      })
-      .catch(function () { clearTimeout(to); btn.disabled = false; btn.textContent = "Submit request"; fallback(o, "We could not reach our server."); });
+    AudtixSubmit.send({
+      form: form, category: "tax", data: o, rows: summary(o), files: allFiles(), button: $("#rq-send"), name: o.display_name,
+      onFieldErrors: function (e) { Object.keys(e).forEach(function (k) { setErr(k, e[k]); }); },
+      onMessage: msg,
+      onDone: function () { form.reset(); $$("[data-list]", form).forEach(function (u) { u.innerHTML = ""; }); started = Date.now(); sync(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    });
   });
 })();

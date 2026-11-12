@@ -73,3 +73,24 @@ fieldset.field legend { font-size: 14px; font-weight: 600; padding: 0; margin-bo
 .qbody input[type=date] { max-width: 220px; }
 @media (max-width: 640px) { .qsec small { display: none; } .qsec summary { padding: 12px; } .qbody { padding-inline: 12px; } }
 @media (prefers-reduced-motion: reduce) { .qsec summary::after { transition: none; } }
+
+/* Success pop-up */
+body.sx-lock { overflow: hidden; }
+.sx-ov { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(8, 22, 40, .62); backdrop-filter: blur(3px); animation: sxf .18s ease-out; }
+.sx-card { background: #fff; border-radius: 20px; max-width: 460px; width: 100%; padding: 32px 28px 26px; text-align: center; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); outline: none; animation: sxu .22s ease-out; max-height: calc(100dvh - 36px); overflow: auto; }
+.sx-card h2 { font-size: 26px; margin: 10px 0 12px; }
+.sx-card p { color: var(--muted, #5A6B7D); margin: 0 0 14px; line-height: 1.55; }
+.sx-ic { width: 60px; height: 60px; border-radius: 50%; background: #DDF3E7; color: #177245; display: grid; place-items: center; margin: 0 auto; }
+.sx-ref { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.sx-id { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 19px; font-weight: 600; background: var(--blue-soft, #EAF2FC); color: #10202F; padding: 8px 12px; border-radius: 9px; user-select: all; }
+.sx-tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #fff; background: #0E7A6B; padding: 5px 9px; border-radius: 6px; }
+.sx-tag.sx-audit { background: #6A3FB5; }
+.sx-row { display: grid; gap: 10px; margin-top: 18px; }
+.sx-wa { display: inline-flex; gap: 9px; align-items: center; justify-content: center; background: #1FAD5A; color: #fff; font-weight: 700; padding: 13px 18px; border-radius: 11px; text-decoration: none; }
+.sx-wa:hover { background: #178F49; }
+.sx-close { font: inherit; font-weight: 600; background: transparent; border: 1px solid #c6d4e5; color: #10202F; padding: 11px 18px; border-radius: 11px; cursor: pointer; }
+.sx-close:hover { background: #F4F8FD; }
+.form-err a { color: inherit; font-weight: 700; }
+@keyframes sxf { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sxu { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sx-ov, .sx-card { animation: none; } }

@@ -9,7 +9,7 @@ RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Never serve repository internals: git data, the backend kit, docs, scripts, SQL, TypeScript, env files
-RewriteRule ^(\.git|backend)(/|$) - [R=404,L]
+RewriteRule ^(\.git|backend|database|private)(/|$) - [R=404,L]
 RewriteRule ^(README\.md|\.gitignore)$ - [R=404,L]
 <FilesMatch "(^\.(?!well-known)|\.(sql|ts|mjs|md|example|env|bundle|zip|py|sh|log)$)">
   Require all denied
