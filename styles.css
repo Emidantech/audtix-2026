@@ -402,10 +402,8 @@ html.nav-lock .fab { display: none; }
 .crumbbar .crumbs { padding-top: 0; }
 .crumb-cta { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; text-decoration: none; color: var(--blue-ink); background: #fff; border-radius: 99px; padding: 8px 15px; box-shadow: 0 4px 14px rgba(0, 0, 0, .14); transition: transform .15s ease; }
 .crumb-cta:hover { transform: translateY(-1px); background: var(--blue-soft); }
-.svc .more + .more, .svc .more.quote { margin-left: 0; }
-.svc .quote { display: inline-flex; margin-top: 8px; font-weight: 700; }
-.foundations .quote { display: inline-block; margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--blue-ink); text-decoration: none; }
-.foundations .quote:hover { text-decoration: underline; }
+.svc .more + .svc-btn { margin-top: 12px; }
+.foundations .svc-btn.sm { margin-top: 12px; padding: 9px 15px; font-size: 14px; }
 
 /* ---------- Media page (media.html) ---------- */
 .media-sec { padding-top: 44px; }

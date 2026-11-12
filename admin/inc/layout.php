@@ -3,6 +3,7 @@
    Assets are bundled in admin/assets/vendor (no CDN, nothing to install). */
 
 const ASSET_V = '20261112';
+function asset_v(): string { return (string) setting('asset_version', ASSET_V); }
 
 function nav_counts(): array {
     static $c = null;
@@ -60,9 +61,9 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
     $assets = 'assets/vendor';
     echo '<!doctype html><html lang="en" data-bs-theme="light" data-lte-color-mode="off"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
        . '<title>' . h($title) . ' | Audtix Admin</title>'
-       . '<link rel="stylesheet" href="' . $assets . '/bootstrap-icons/bootstrap-icons.min.css?v=' . ASSET_V . '">'
-       . '<link rel="stylesheet" href="' . $assets . '/adminlte/css/adminlte.min.css?v=' . ASSET_V . '">'
-       . '<link rel="stylesheet" href="admin.css?v=' . ASSET_V . '">' . brand_head() . '</head>';
+       . '<link rel="stylesheet" href="' . $assets . '/bootstrap-icons/bootstrap-icons.min.css?v=' . asset_v() . '">'
+       . '<link rel="stylesheet" href="' . $assets . '/adminlte/css/adminlte.min.css?v=' . asset_v() . '">'
+       . '<link rel="stylesheet" href="admin.css?v=' . asset_v() . '">' . brand_head() . '</head>';
 
     if (!$admin) { // sign-in, setup: centred card, no navigation
         echo '<body class="login-page bg-body-secondary"><div class="login-box"><div class="login-logo"><a href="../index.html"><img src="' . h(brand_logo_url()) . '" alt="" height="40" class="me-2">Audtix&nbsp;<b>Admin</b></a></div><div class="card card-outline card-primary"><div class="card-body login-card-body">';
@@ -166,7 +167,7 @@ function page_foot(bool $auth = false): void {
     $assets = 'assets/vendor';
     if ($auth) echo '</div></div></div>';
     else echo '</div></div></main><footer class="app-footer"><div class="float-end d-none d-sm-inline">Times are East Africa Time</div><strong>&copy; ' . gmdate('Y') . ' <a href="../index.html" class="text-decoration-none">Audtix Systems</a>.</strong> Admin panel.</footer></div>';
-    echo '<script src="' . $assets . '/bootstrap/js/bootstrap.bundle.min.js?v=' . ASSET_V . '"></script><script src="' . $assets . '/adminlte/js/adminlte.min.js?v=' . ASSET_V . '"></script><script src="admin.js?v=' . ASSET_V . '"></script></body></html>';
+    echo '<script src="' . $assets . '/bootstrap/js/bootstrap.bundle.min.js?v=' . asset_v() . '"></script><script src="' . $assets . '/adminlte/js/adminlte.min.js?v=' . asset_v() . '"></script><script src="admin.js?v=' . asset_v() . '"></script></body></html>';
 }
 
 function pager(int $page, int $pages, int $total, callable $url, string $noun = 'item'): string {

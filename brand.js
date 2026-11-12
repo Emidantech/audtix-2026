@@ -11,8 +11,9 @@
   function logos(b) {
     if (!b) return;
     var q = function (u) { return u + (u.indexOf("?") < 0 ? "?v=" + encodeURIComponent(b.v || "") : ""); };
-    if (b.logo) document.querySelectorAll('img[src$="img/logo-blue.png"], img[data-brand="logo"]').forEach(function (i) { i.setAttribute("data-brand", "logo"); i.src = q(b.logo); });
-    if (b.logo_white) document.querySelectorAll('img[src$="img/logo-white.png"], img[data-brand="logo-white"]').forEach(function (i) { i.setAttribute("data-brand", "logo-white"); i.src = q(b.logo_white); });
+    var keep = function (i, orig) { if (!i.getAttribute("data-orig")) i.setAttribute("data-orig", orig); i.onerror = function () { i.onerror = null; i.src = i.getAttribute("data-orig"); }; };
+    if (b.logo) document.querySelectorAll('img[src$="img/logo-blue.png"], img[data-brand="logo"]').forEach(function (i) { keep(i, "img/logo-blue.png"); i.setAttribute("data-brand", "logo"); i.src = q(b.logo); });
+    if (b.logo_white) document.querySelectorAll('img[src$="img/logo-white.png"], img[data-brand="logo-white"]').forEach(function (i) { keep(i, "img/logo-white.png"); i.setAttribute("data-brand", "logo-white"); i.src = q(b.logo_white); });
     if (b.favicon) setFav(q(b.favicon));
   }
   var cached = null;
