@@ -1,7 +1,7 @@
-# Only submit.php is public. Everything else here is code or secrets.
-<FilesMatch "^(?!submit\.php$).*$">
+# Only the two public endpoints are reachable. Everything else here is code or secrets.
+<FilesMatch "^(?!(submit|quote)\.php$).*$">
   Require all denied
 </FilesMatch>
-<Files "submit.php">
+<FilesMatch "^(submit|quote)\.php$">
   Require all granted
-</Files>
+</FilesMatch>

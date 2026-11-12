@@ -7,10 +7,10 @@ try { $pdo = db(); $exists = (int) $pdo->query("SELECT COUNT(*) FROM admins WHER
 catch (Throwable $e) { $exists = -1; }
 $token = (string) cfg('setup_token', '');
 page_head('Setup');
-echo '<div class="login" style="max-width:480px"><h1><span class="dot"></span>First-time setup</h1>';
-if ($exists === -1) echo '<div class="flash bad">Cannot reach the database. Check the db_ values in the config file and that the SQL file was imported.</div>';
+echo '<p class="login-box-msg fw-semibold">First-time setup</p>';
+if ($exists === -1) echo '<div class="alert alert-danger">Cannot reach the database. Check the db_ values in the config file and that the SQL file was imported.</div>';
 elseif ($exists > 0) echo '<p>A super admin already exists, so setup is closed. <a href="login.php">Go to sign in</a>.</p>';
-elseif (strlen($token) < 16) echo '<div class="flash bad">Setup is locked. Put a long random <b>setup_token</b> (16+ characters) in your config file first, then reload this page.</div>';
+elseif (strlen($token) < 16) echo '<div class="alert alert-danger">Setup is locked. Put a long random <b>setup_token</b> (16+ characters) in your config file first, then reload this page.</div>';
 else {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         check_csrf();
@@ -27,15 +27,15 @@ else {
             log_activity(null, 'super_admin_created', $u); $done = true;
         }
     }
-    if ($done) echo '<div class="flash">Super admin created. <b>Now remove setup_token from your config file</b>, then <a href="login.php">sign in</a>.</div>';
+    if ($done) echo '<div class="alert alert-success">Super admin created. <b>Now remove setup_token from your config file</b>, then <a href="login.php">sign in</a>.</div>';
     else {
-        if ($err) echo '<div class="flash bad" role="alert">' . h($err) . '</div>';
-        echo '<p class="muted">Create the super admin account. This page closes itself afterwards.</p><form method="post" class="stack">' . csrf_field()
-          . '<label>Setup token<input name="token" type="password" required autocomplete="off"></label><label>Full name<input name="full_name" required maxlength="120" value="' . h($_POST['full_name'] ?? '') . '"></label>'
-          . '<label>Username<input name="username" required maxlength="40" autocapitalize="none" value="' . h($_POST['username'] ?? '') . '"></label><label>Email<input name="email" type="email" required value="' . h($_POST['email'] ?? '') . '"></label>'
-          . '<label>Phone (optional)<input name="phone" maxlength="40" value="' . h($_POST['phone'] ?? '') . '"></label>'
-          . '<label>Password<input name="password" type="password" required minlength="10" autocomplete="new-password"></label><label>Repeat password<input name="password2" type="password" required minlength="10" autocomplete="new-password"></label>'
-          . '<button class="btn">Create super admin</button></form>';
+        if ($err) echo '<div class="alert alert-danger" role="alert">' . h($err) . '</div>';
+        echo '<p class="text-secondary">Create the super admin account. This page closes itself afterwards.</p><form method="post">' . csrf_field()
+          . '<div class="mb-2"><label class="form-label">Setup token<input class="form-control" name="token" type="password" required autocomplete="off"></label></div><div class="mb-2"><label class="form-label">Full name<input class="form-control" name="full_name" required maxlength="120" value="' . h($_POST['full_name'] ?? '') . '"></label></div>'
+          . '<div class="mb-2"><label class="form-label">Username<input class="form-control" name="username" required maxlength="40" autocapitalize="none" value="' . h($_POST['username'] ?? '') . '"></label></div><div class="mb-2"><label class="form-label">Email<input class="form-control" name="email" type="email" required value="' . h($_POST['email'] ?? '') . '"></label></div>'
+          . '<div class="mb-2"><label class="form-label">Phone (optional)<input class="form-control" name="phone" maxlength="40" value="' . h($_POST['phone'] ?? '') . '"></label></div>'
+          . '<div class="mb-2"><label class="form-label">Password<input class="form-control" name="password" type="password" required minlength="10" autocomplete="new-password"></label></div><div class="mb-2"><label class="form-label">Repeat password<input class="form-control" name="password2" type="password" required minlength="10" autocomplete="new-password"></label></div>'
+          . '<button class="btn btn-primary w-100">Create super admin</button></form>';
     }
 }
-echo '</div>'; page_foot();
+page_foot(true);

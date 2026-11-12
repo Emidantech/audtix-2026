@@ -161,12 +161,19 @@ function smtp_send(array $c, string $from, array $rcpts, string $headers, string
     } finally { @fclose($fp); }
 }
 
-/** Sends one email. Returns [ok(bool), error(string)]. Never throws. */
+/** Sends one email to the team (notify_to, cc notify_cc). Returns [ok(bool), error(string)]. Never throws. */
 function send_mail(string $subject, string $text, string $html, array $attachments = [], string $replyTo = ''): array {
+    $to = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_to', '')))));
+    $cc = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_cc', '')))));
+    if (!$to) return [false, 'notify_to is not set'];
+    return send_mail_to($to, $cc, $subject, $text, $html, $attachments, $replyTo);
+}
+/** Sends one email to any recipients (used to send a quotation to a client). Returns [ok, error]. Never throws. */
+function send_mail_to(array $to, array $cc, string $subject, string $text, string $html, array $attachments = [], string $replyTo = ''): array {
     try {
-        $to = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_to', '')))));
-        $cc = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_cc', '')))));
-        if (!$to) return [false, 'notify_to is not set'];
+        $to = array_values(array_filter($to, fn($a) => filter_var($a, FILTER_VALIDATE_EMAIL)));
+        $cc = array_values(array_filter($cc, fn($a) => filter_var($a, FILTER_VALIDATE_EMAIL)));
+        if (!$to) return [false, 'no valid recipient'];
         $from = (string) cfg('mail_from', 'no-reply@localhost'); $fromName = (string) cfg('mail_from_name', 'Audtix Website');
         $rcpts = array_merge($to, $cc);
         if ($replyTo !== '' && !filter_var($replyTo, FILTER_VALIDATE_EMAIL)) $replyTo = '';

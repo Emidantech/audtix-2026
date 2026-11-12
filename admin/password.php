@@ -13,15 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true); flash('Password changed.'); redirect('index.php');
     }
 }
-page_head('Change password', $admin);
+page_head('Change password', $admin, 'password');
 ?>
-<h1>Change password</h1>
-<?php if ((int) $admin['must_change_pw']): ?><p class="muted">You are using a temporary password. Choose your own before you continue.</p><?php endif; ?>
-<?php if ($err): ?><div class="flash bad" role="alert"><?= h($err) ?></div><?php endif; ?>
-<div class="card"><form method="post" class="stack" style="max-width:420px"><?= csrf_field() ?>
-  <label>Current password<input type="password" name="current" required autocomplete="current-password"></label>
-  <label>New password<input type="password" name="new" required minlength="10" autocomplete="new-password"></label>
-  <label>Repeat new password<input type="password" name="repeat" required minlength="10" autocomplete="new-password"></label>
-  <p class="muted" style="margin:0">At least 10 characters, with letters and at least one number.</p>
-  <button class="btn">Save password</button></form></div>
+<div class="row"><div class="col-md-7 col-lg-5">
+<?php if ((int) $admin['must_change_pw']): ?><div class="alert alert-warning">You are using a temporary password. Choose your own before you continue.</div><?php endif; ?>
+<?php if ($err): ?><div class="alert alert-danger" role="alert"><?= h($err) ?></div><?php endif; ?>
+<div class="card card-outline card-primary"><div class="card-body"><form method="post"><?= csrf_field() ?>
+  <div class="mb-3"><label class="form-label" for="p1">Current password</label><input id="p1" class="form-control" type="password" name="current" required autocomplete="current-password"></div>
+  <div class="mb-3"><label class="form-label" for="p2">New password</label><input id="p2" class="form-control" type="password" name="new" required minlength="10" autocomplete="new-password"></div>
+  <div class="mb-3"><label class="form-label" for="p3">Repeat new password</label><input id="p3" class="form-control" type="password" name="repeat" required minlength="10" autocomplete="new-password"><div class="form-text">At least 10 characters, with letters and at least one number.</div></div>
+  <button class="btn btn-primary">Save password</button></form></div></div>
+</div></div>
 <?php page_foot();

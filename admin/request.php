@@ -4,7 +4,7 @@ $admin = require_login();
 $pdo = db();
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $s = $pdo->prepare('SELECT r.*, a.full_name AS assignee FROM requests r LEFT JOIN admins a ON a.id = r.assigned_to WHERE r.id = ?'); $s->execute([$id]); $r = $s->fetch();
-if (!$r) { http_response_code(404); page_head('Not found', $admin); echo '<p>Request not found. <a href="index.php">Back to requests</a></p>'; page_foot(); exit; }
+if (!$r) { http_response_code(404); page_head('Not found', $admin, 'requests'); echo '<div class="alert alert-warning">Request not found. <a href="requests.php">Back to requests</a></div>'; page_foot(); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
@@ -39,37 +39,40 @@ $rows = json_decode((string) $r['rows_json'], true) ?: [];
 $fs = $pdo->prepare('SELECT * FROM request_files WHERE request_pk = ? ORDER BY id'); $fs->execute([$id]); $files = $fs->fetchAll();
 $ev = $pdo->prepare('SELECT e.*, a.full_name FROM request_events e LEFT JOIN admins a ON a.id = e.admin_id WHERE e.request_pk = ? ORDER BY e.id DESC'); $ev->execute([$id]); $events = $ev->fetchAll();
 $admins = $pdo->query('SELECT id, full_name FROM admins WHERE is_active = 1 ORDER BY full_name')->fetchAll();
-page_head($r['request_id'], $admin);
+page_head($r['request_id'], $admin, 'requests:' . $r['category'], [['Requests', 'requests.php'], [$r['request_id'], null]]);
 function fsize(int $n): string { return $n >= 1048576 ? round($n / 1048576, 1) . ' MB' : max(1, (int) round($n / 1024)) . ' KB'; }
 ?>
-<p><a href="index.php">&larr; All requests</a></p>
-<h1 class="mono"><?= h($r['request_id']) ?> <span class="tag <?= h($r['category']) ?>"><?= h(CATEGORIES[$r['category']]) ?></span></h1>
-<p class="muted"><?= h($r['client_name']) ?> &middot; received <?= h(eat($r['created_at'])) ?> (EAT) &middot; email copy: <span class="pill <?= $r['email_status'] === 'sent' ? 'good' : ($r['email_status'] === 'failed' ? 'bad' : '') ?>"><?= h($r['email_status']) ?></span><?= $r['email_error'] ? ' <small>' . h($r['email_error']) . '</small>' : '' ?></p>
-<div class="grid2">
-  <div>
-    <div class="card"><h2>Submitted answers</h2><dl class="rows">
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <span class="tag <?= h($r['category']) ?>"><?= h(CATEGORIES[$r['category']]) ?></span>
+  <span class="badge text-bg-<?= STATUS_COLORS[$r['status']] ?? 'secondary' ?>"><?= h(STATUSES[$r['status']] ?? $r['status']) ?></span>
+  <span class="text-secondary"><?= h($r['client_name']) ?> &middot; received <?= h(eat($r['created_at'])) ?> &middot; email copy:</span>
+  <span class="badge text-bg-<?= $r['email_status'] === 'sent' ? 'success' : ($r['email_status'] === 'failed' ? 'danger' : 'secondary') ?>"><?= h($r['email_status']) ?></span><?= $r['email_error'] ? '<small class="text-danger">' . h($r['email_error']) . '</small>' : '' ?>
+</div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-header"><h3 class="card-title">Submitted answers</h3></div><div class="card-body"><dl class="rows">
       <?php $lastSec = ''; foreach ($rows as $row): if (($row[1] ?? '') === '') continue; if (($row[2] ?? '') !== '' && $row[2] !== $lastSec) { $lastSec = $row[2]; echo '</dl><div class="sec">' . h($lastSec) . '</div><dl class="rows">'; } ?>
         <div><dt><?= h($row[0]) ?></dt><dd><?= h($row[1]) ?></dd></div>
-      <?php endforeach; ?></dl></div>
-    <div class="card"><h2>Documents (<?= count($files) ?>)</h2>
-      <?php if (!$files): ?><p class="muted">No documents were uploaded.</p><?php else: ?><table><thead><tr><th>Document</th><th>File</th><th>Size</th><th></th></tr></thead><tbody>
-      <?php foreach ($files as $f): ?><tr><td><?= h($f['doc_label'] ?: substr($f['field_key'], 6)) ?></td><td><?= h($f['original_name']) ?></td><td><?= h(fsize((int) $f['size_bytes'])) ?></td><td><a class="btn sm ghost" href="download.php?id=<?= (int) $f['id'] ?>">Download</a></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
+      <?php endforeach; ?></dl></div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Documents (<?= count($files) ?>)</h3></div>
+      <?php if (!$files): ?><div class="card-body text-secondary">No documents were uploaded.</div><?php else: ?><div class="card-body p-0"><table class="table mb-0"><thead><tr><th>Document</th><th>File</th><th>Size</th><th></th></tr></thead><tbody>
+      <?php foreach ($files as $f): ?><tr><td><?= h($f['doc_label'] ?: substr($f['field_key'], 6)) ?></td><td><?= h($f['original_name']) ?></td><td><?= h(fsize((int) $f['size_bytes'])) ?></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="download.php?id=<?= (int) $f['id'] ?>"><i class="bi bi-download"></i> Download</a></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></div>
   </div>
-  <div>
-    <div class="card"><h2>Client</h2><dl class="rows">
+  <div class="col-lg-4">
+    <div class="card card-outline card-primary"><div class="card-header"><h3 class="card-title">Client</h3></div><div class="card-body"><dl class="rows">
       <div><dt>Name</dt><dd><?= h($r['client_name']) ?></dd></div>
       <?php if ($r['contact_person']): ?><div><dt>Contact</dt><dd><?= h($r['contact_person']) ?></dd></div><?php endif; ?>
       <div><dt>Email</dt><dd><a href="mailto:<?= h($r['email']) ?>"><?= h($r['email']) ?></a></dd></div>
-      <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $r['phone'])) ?>"><?= h($r['phone']) ?></a> &middot; <a href="https://wa.me/<?= h(preg_replace('/\D/', '', $r['phone'])) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div></dl></div>
-    <div class="card"><h2>Status</h2>
-      <form method="post" class="stack"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="status">
-        <select name="status"><?php foreach (STATUSES as $k => $v): ?><option value="<?= $k ?>"<?= $r['status'] === $k ? ' selected' : '' ?>><?= h($v) ?></option><?php endforeach; ?></select><button class="btn sm">Update status</button></form>
-      <form method="post" class="stack"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="assign">
-        <label>Assigned to<select name="assigned_to"><option value="0">Nobody</option><?php foreach ($admins as $a): ?><option value="<?= (int) $a['id'] ?>"<?= (int) $r['assigned_to'] === (int) $a['id'] ? ' selected' : '' ?>><?= h($a['full_name']) ?></option><?php endforeach; ?></select></label><button class="btn sm ghost">Save</button></form></div>
-    <div class="card"><h2>Internal notes and history</h2>
-      <form method="post" class="stack"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn sm">Add note</button></form>
-      <ul class="timeline"><?php foreach ($events as $e): ?><li><?= h($e['note']) ?><small><?= h($e['full_name'] ?: 'System') ?> &middot; <?= h(eat($e['created_at'])) ?></small></li><?php endforeach; ?>
-        <li>Request received<small>Website &middot; <?= h(eat($r['created_at'])) ?></small></li></ul></div>
+      <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $r['phone'])) ?>"><?= h($r['phone']) ?></a> &middot; <a href="https://wa.me/<?= h(preg_replace('/\D/', '', $r['phone'])) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div></dl></div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Status and assignment</h3></div><div class="card-body">
+      <form method="post" class="d-flex gap-2 mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="status">
+        <select name="status" class="form-select form-select-sm" aria-label="Status"><?php foreach (STATUSES as $k => $v): ?><option value="<?= $k ?>"<?= $r['status'] === $k ? ' selected' : '' ?>><?= h($v) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-primary text-nowrap">Update</button></form>
+      <form method="post" class="d-flex gap-2"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="assign">
+        <select name="assigned_to" class="form-select form-select-sm" aria-label="Assigned to"><option value="0">Not assigned</option><?php foreach ($admins as $a): ?><option value="<?= (int) $a['id'] ?>"<?= (int) $r['assigned_to'] === (int) $a['id'] ? ' selected' : '' ?>><?= h($a['full_name']) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-outline-primary text-nowrap">Assign</button></form></div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Internal notes and history</h3></div><div class="card-body">
+      <form method="post" class="mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="note"><textarea name="note" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Add a note for the team (the client never sees this)"></textarea><button class="btn btn-sm btn-primary">Add note</button></form>
+      <ul class="timeline-list"><?php foreach ($events as $e): ?><li class="ev-<?= h($e['event_type']) ?>"><?= h($e['note']) ?><small><?= h($e['full_name'] ?: 'System') ?> &middot; <?= h(eat($e['created_at'])) ?></small></li><?php endforeach; ?>
+        <li>Request received<small>Website &middot; <?= h(eat($r['created_at'])) ?></small></li></ul></div></div>
   </div>
 </div>
 <?php page_foot();
