@@ -55,3 +55,21 @@ fieldset.field legend { font-size: 14px; font-weight: 600; padding: 0; margin-bo
 
 /* The thank-you panel must stay out of the grid until it is used */
 .rq-done[hidden] { display: none; }
+
+/* Audit questionnaire: collapsible sections */
+.qsecs { display: grid; gap: 10px; }
+.qsec { border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
+.qsec[open] { border-color: var(--blue); }
+.qsec summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; min-height: 52px; }
+.qsec summary::-webkit-details-marker { display: none; }
+.qsec summary::after { content: ""; margin-left: auto; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s ease; flex: none; }
+.qsec[open] summary::after { transform: rotate(-135deg); }
+.qsec summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 12px; }
+.qsec .ql { width: 30px; height: 30px; border-radius: 8px; background: var(--blue-soft); color: var(--blue-ink); display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
+.qsec .qt { font-weight: 600; }
+.qsec small { color: var(--muted); font-size: 13px; }
+.qbody { display: grid; gap: 22px; padding: 6px 16px 20px; }
+.qbody textarea { min-height: 84px; }
+.qbody input[type=date] { max-width: 220px; }
+@media (max-width: 640px) { .qsec small { display: none; } .qsec summary { padding: 12px; } .qbody { padding-inline: 12px; } }
+@media (prefers-reduced-motion: reduce) { .qsec summary::after { transition: none; } }

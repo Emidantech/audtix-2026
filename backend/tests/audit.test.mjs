@@ -56,4 +56,21 @@ o = await run([], { data: { elapsed_ms: 500 } }); assert.equal(o.r.status, 400);
 o = await run([["file__financial_statements", Buffer.from("MZ not a pdf"), "evil.pdf", "application/pdf"]]); assert.equal(o.r.status, 422);
 o = await run([["file__tax_request_nope", pdf3, "a.pdf", "application/pdf"]]); assert.equal(o.r.status, 422);
 o = await run([]); assert.equal(o.r.status, 200); assert.equal(o.sent[0].attachments.length, 1); // form only, still a PDF
+// questionnaire: new fields, conditionals, dates, new upload types, section headings
+const qa = { physical_address: "Plot 5, Ntinda", start_date: "2026-12-01", main_activities: "ICT", owners: "A and B", ownership_changes: "yes", ownership_changes_details: "New director",
+  customer_types: "other", customer_other: "Diaspora", sales_payment: ["cash", "other"], sales_payment_other: "Cheque", holds_inventory: "yes", stocktake_freq: ["monthly"], last_stocktake: "2026-06-30",
+  obsolete: ["write_off", "other"], obsolete_other: "Donated", tax_registrations: ["vat", "paye"], docs_available: ["cashbook", "other"], docs_available_other: "Board minutes", employee_count: "14" };
+let r = validateSubmission({ ...good, ...qa }); assert.ok(r.ok, JSON.stringify(r.errors)); assert.equal(r.clean.customer_other, "Diaspora"); assert.deepEqual(r.clean.tax_registrations, ["vat", "paye"]);
+r = validateSubmission({ ...good, ownership_changes: "no", ownership_changes_details: "x", customer_types: "businesses", customer_other: "x", sales_payment: ["cash"], sales_payment_other: "x" });
+assert.ok(r.ok); assert.equal(r.clean.ownership_changes_details, undefined); assert.equal(r.clean.customer_other, undefined); assert.equal(r.clean.sales_payment_other, undefined);
+for (const [patch, key] of [[{ start_date: "2026-13-45" }, "start_date"], [{ start_date: "tomorrow" }, "start_date"], [{ ppe: "perhaps" }, "ppe"], [{ tax_registrations: ["nope"] }, "x"]]) {
+  const bad = validateSubmission({ ...good, ...patch }); if (key === "x") assert.ok(bad.ok && !bad.clean.tax_registrations); else { assert.equal(bad.ok, false, key); assert.ok(bad.errors[key], key); }
+}
+const rows = rowsFor(validateSubmission({ ...good, ...qa }).clean);
+assert.ok(rows.some(([k]) => k === "§ A. General information") );
+assert.ok(rows.some(([k]) => k === "§ A. General information")); assert.ok(rows.some(([k]) => k === "§ H. Inventory")); assert.ok(!rows.some(([k]) => k === "§ K. Trade payables"), "empty sections have no heading");
+o = await run([["file__payroll_records", pdf3, "payroll.pdf", "application/pdf"], ["file__inventory_listing", png, "stock.png", "image/png"], ["file__management_letter", pdf3, "ml.pdf", "application/pdf"]], { data: qa });
+assert.equal(o.r.status, 200, await o.r.clone().text()); assert.equal(o.inserted.payload.physical_address, "Plot 5, Ntinda"); assert.equal(o.files.length, 3);
+assert.ok(o.sent[0].text.includes("== H. Inventory =="), "email carries section headings");
+fs.writeFileSync("/tmp/sample-audit-q.pdf", Buffer.from(o.sent[0].attachments[0].content, "base64"));
 console.log("audit tests passed");

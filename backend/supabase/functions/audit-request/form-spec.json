@@ -1,6 +1,404 @@
 {
  "title": "Audit service request",
  "enums": {
+  "yn": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ]
+  ],
+  "yn3": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "maybe",
+    "Maybe"
+   ]
+  ],
+  "services_kind": [
+   [
+    "manufacture",
+    "Manufactures"
+   ],
+   [
+    "process",
+    "Processes"
+   ],
+   [
+    "purchase",
+    "Purchases"
+   ],
+   [
+    "resell",
+    "Resells"
+   ],
+   [
+    "services",
+    "Provides services"
+   ]
+  ],
+  "customer_types": [
+   [
+    "individuals",
+    "Individuals"
+   ],
+   [
+    "businesses",
+    "Businesses"
+   ],
+   [
+    "government",
+    "Government institutions"
+   ],
+   [
+    "schools",
+    "Schools or educational institutions"
+   ],
+   [
+    "ngos",
+    "NGOs"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "sales_payment": [
+   [
+    "bank",
+    "Bank transfer"
+   ],
+   [
+    "credit",
+    "Credit"
+   ],
+   [
+    "cash",
+    "Cash"
+   ],
+   [
+    "mobile",
+    "Mobile money"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "accounting_by": [
+   [
+    "internal",
+    "Internal"
+   ],
+   [
+    "external",
+    "External accountant"
+   ],
+   [
+    "both",
+    "Both"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "accounting_basis": [
+   [
+    "accrual",
+    "Accrual"
+   ],
+   [
+    "cash",
+    "Cash"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "invoice_type": [
+   [
+    "electronic",
+    "Electronically"
+   ],
+   [
+    "manual",
+    "Manually"
+   ],
+   [
+    "both",
+    "Both"
+   ]
+  ],
+  "verified": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "inventory_record": [
+   [
+    "manual",
+    "Manual stock register"
+   ],
+   [
+    "excel",
+    "Excel"
+   ],
+   [
+    "accounting",
+    "Accounting software"
+   ],
+   [
+    "system",
+    "Inventory management system"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "stocktake_freq": [
+   [
+    "daily",
+    "Daily"
+   ],
+   [
+    "weekly",
+    "Weekly"
+   ],
+   [
+    "monthly",
+    "Monthly"
+   ],
+   [
+    "quarterly",
+    "Quarterly"
+   ],
+   [
+    "annually",
+    "Annually"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "valuation": [
+   [
+    "fifo",
+    "FIFO (first in, first out)"
+   ],
+   [
+    "wac",
+    "Weighted average cost"
+   ],
+   [
+    "specific",
+    "Specific identification"
+   ],
+   [
+    "standard",
+    "Standard cost"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "obsolete": [
+   [
+    "write_off",
+    "Written off as a loss or expense"
+   ],
+   [
+    "provision",
+    "Provision or allowance for the estimated loss in value"
+   ],
+   [
+    "discount_sale",
+    "Sold at a discounted price and the loss recognised"
+   ],
+   [
+    "return",
+    "Returned to the supplier, where applicable"
+   ],
+   [
+    "separate",
+    "Separated from normal inventory pending management's decision"
+   ],
+   [
+    "no_adjust",
+    "No adjustment is made in the accounts"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
+  "documented": [
+   [
+    "yes",
+    "Yes"
+   ],
+   [
+    "no",
+    "No"
+   ],
+   [
+    "na",
+    "Not applicable"
+   ]
+  ],
+  "payroll_method": [
+   [
+    "manual",
+    "Manual"
+   ],
+   [
+    "excel",
+    "Excel"
+   ],
+   [
+    "software",
+    "Payroll software"
+   ],
+   [
+    "outsourced",
+    "Outsourced"
+   ]
+  ],
+  "tax_regs": [
+   [
+    "income",
+    "Income tax"
+   ],
+   [
+    "vat",
+    "Value added tax (VAT)"
+   ],
+   [
+    "paye",
+    "Pay as you earn (PAYE)"
+   ],
+   [
+    "wht",
+    "Withholding tax"
+   ],
+   [
+    "excise",
+    "Excise duty"
+   ],
+   [
+    "rental",
+    "Rental income tax"
+   ],
+   [
+    "presumptive",
+    "Presumptive tax"
+   ],
+   [
+    "import_export",
+    "Import or export related tax registration"
+   ]
+  ],
+  "docs_available": [
+   [
+    "trial_balance",
+    "Trial balance"
+   ],
+   [
+    "general_ledger",
+    "General ledger"
+   ],
+   [
+    "cashbook",
+    "Cashbook"
+   ],
+   [
+    "bank_statements",
+    "Bank statements"
+   ],
+   [
+    "bank_recs",
+    "Bank reconciliations"
+   ],
+   [
+    "sales_ledger",
+    "Sales ledger"
+   ],
+   [
+    "purchase_ledger",
+    "Purchase ledger"
+   ],
+   [
+    "receivables",
+    "Receivables schedule"
+   ],
+   [
+    "payables",
+    "Payables schedule"
+   ],
+   [
+    "inventory",
+    "Inventory listing"
+   ],
+   [
+    "asset_register",
+    "Fixed asset register"
+   ],
+   [
+    "payroll",
+    "Payroll records"
+   ],
+   [
+    "tax_returns",
+    "Tax returns"
+   ],
+   [
+    "loans",
+    "Loan statements or agreements"
+   ],
+   [
+    "previous_audit",
+    "Previous audit report"
+   ],
+   [
+    "management_letter",
+    "Previous management letter"
+   ],
+   [
+    "registration",
+    "Incorporation or registration documents"
+   ],
+   [
+    "contracts",
+    "Major contracts or agreements"
+   ],
+   [
+    "other",
+    "Other"
+   ]
+  ],
   "org_type": [
    [
     "company",
@@ -391,6 +789,7 @@
    "type": "radio",
    "required": true,
    "max": 200,
+   "section": "About the organisation",
    "enum": "org_type"
   },
   {
@@ -475,6 +874,7 @@
    "type": "checks",
    "required": true,
    "max": 200,
+   "section": "The audit you need",
    "enum": "audit_types"
   },
   {
@@ -533,6 +933,7 @@
    "type": "select",
    "required": false,
    "max": 200,
+   "section": "About the business",
    "enum": "business_sector"
   },
   {
@@ -627,6 +1028,794 @@
    "required": false,
    "max": 200,
    "enum": "heard_from"
+  },
+  {
+   "name": "physical_address",
+   "label": "Physical address",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "section": "A. General information",
+   "q": "A"
+  },
+  {
+   "name": "start_date",
+   "label": "Period covered by the audit: date the audit should start",
+   "type": "date",
+   "required": false,
+   "max": 10,
+   "q": "A"
+  },
+  {
+   "name": "main_activities",
+   "label": "Please briefly describe the main activities of the business",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "A"
+  },
+  {
+   "name": "owners",
+   "label": "Who are the owners, shareholders or partners of the business?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "section": "B. Ownership and management",
+   "q": "B"
+  },
+  {
+   "name": "day_to_day_mgmt",
+   "label": "Who is responsible for the day-to-day management of the business?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "B"
+  },
+  {
+   "name": "ownership_changes",
+   "label": "Have there been any changes in ownership, directors, partners or senior management during the audit period?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "B"
+  },
+  {
+   "name": "ownership_changes_details",
+   "label": "Please provide details of the changes",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "show": {
+    "field": "ownership_changes",
+    "equals": "yes"
+   },
+   "q": "B"
+  },
+  {
+   "name": "related_parties",
+   "label": "Are there any related parties or businesses associated with the owners, directors or management? If yes, please provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "B"
+  },
+  {
+   "name": "products_services",
+   "label": "What are the main products or services provided by the business?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "section": "C. Business operations",
+   "q": "C"
+  },
+  {
+   "name": "revenue_sources",
+   "label": "What are the major sources of revenue?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "C"
+  },
+  {
+   "name": "services_kind",
+   "label": "Does the business manufacture, process, purchase, resell or provide services?",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "services_kind",
+   "q": "C"
+  },
+  {
+   "name": "customer_types",
+   "label": "Who are the major categories of customers?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "customer_types",
+   "q": "C"
+  },
+  {
+   "name": "customer_other",
+   "label": "Other customer category",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "customer_types",
+    "equals": "other"
+   },
+   "q": "C"
+  },
+  {
+   "name": "supplier_types",
+   "label": "Who are the major categories of suppliers?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "C"
+  },
+  {
+   "name": "sales_payment",
+   "label": "Are sales made by:",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "sales_payment",
+   "q": "C"
+  },
+  {
+   "name": "sales_payment_other",
+   "label": "Other way sales are paid",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "sales_payment",
+    "includes": "other"
+   },
+   "q": "C"
+  },
+  {
+   "name": "outsourced",
+   "label": "Are any business operations outsourced to third parties? If yes, provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "C"
+  },
+  {
+   "name": "accounting_by",
+   "label": "Is accounting maintained internally or by an external accountant?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "accounting_by",
+   "section": "D. Accounting and financial reporting",
+   "q": "D"
+  },
+  {
+   "name": "accounting_by_other",
+   "label": "Other arrangement",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "accounting_by",
+    "equals": "other"
+   },
+   "q": "D"
+  },
+  {
+   "name": "records_responsible",
+   "label": "Who is responsible for maintaining the accounting records?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "D"
+  },
+  {
+   "name": "accounting_basis",
+   "label": "What basis of accounting is used?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "accounting_basis",
+   "q": "D"
+  },
+  {
+   "name": "accounting_basis_other",
+   "label": "Other basis of accounting",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "accounting_basis",
+    "equals": "other"
+   },
+   "q": "D"
+  },
+  {
+   "name": "reconciliation_freq",
+   "label": "How frequently are bank, customer and supplier accounts reconciled?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "D"
+  },
+  {
+   "name": "mgmt_accounts",
+   "label": "Are monthly or periodic management accounts prepared?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "D"
+  },
+  {
+   "name": "records_approver",
+   "label": "Who reviews and approves the financial records?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "D"
+  },
+  {
+   "name": "policy_changes",
+   "label": "Have the accounting policies changed during the audit period? If yes, explain",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "D"
+  },
+  {
+   "name": "adjustments",
+   "label": "Have there been any significant accounting adjustments during the year? If yes, provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "D"
+  },
+  {
+   "name": "bank_accounts",
+   "label": "List all bank accounts operated by the entity (bank, account type, account number, currency)",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "section": "E. Banking and cash",
+   "q": "E"
+  },
+  {
+   "name": "petty_cash",
+   "label": "Does the business maintain petty cash?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "E"
+  },
+  {
+   "name": "cash_handler",
+   "label": "Who is responsible for handling cash?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "E"
+  },
+  {
+   "name": "cash_process",
+   "label": "How are cash collections recorded and deposited?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "E"
+  },
+  {
+   "name": "bank_recs",
+   "label": "Are bank reconciliations prepared regularly?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "E"
+  },
+  {
+   "name": "sales_process",
+   "label": "Describe the sales process from receiving a customer order to collection of payment",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "section": "F. Revenue and sales",
+   "q": "F"
+  },
+  {
+   "name": "sales_recording",
+   "label": "How are sales recorded?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "F"
+  },
+  {
+   "name": "invoice_type",
+   "label": "Are invoices and receipts generated electronically or manually?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "invoice_type",
+   "q": "F"
+  },
+  {
+   "name": "credit_sales",
+   "label": "Are credit sales permitted? If yes, who approves credit sales?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "F"
+  },
+  {
+   "name": "sales_returns",
+   "label": "How are sales returns, discounts and allowances recorded?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "F"
+  },
+  {
+   "name": "purchasing_process",
+   "label": "Describe the purchasing process from requisition to payment",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "section": "G. Purchases and expenditure",
+   "q": "G"
+  },
+  {
+   "name": "purchase_approver",
+   "label": "Who is authorised to approve purchases?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "G"
+  },
+  {
+   "name": "purchase_orders",
+   "label": "Are purchase orders used?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "G"
+  },
+  {
+   "name": "goods_verified",
+   "label": "Are goods or services received independently verified before payment?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "verified",
+   "q": "G"
+  },
+  {
+   "name": "goods_verified_other",
+   "label": "Other way goods are verified",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "goods_verified",
+    "equals": "other"
+   },
+   "q": "G"
+  },
+  {
+   "name": "invoice_approval",
+   "label": "How are supplier invoices approved and recorded?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "G"
+  },
+  {
+   "name": "credit_suppliers",
+   "label": "Are there any major suppliers on credit terms? If yes, list them",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "G"
+  },
+  {
+   "name": "supplier_contracts",
+   "label": "Are there any significant contracts or commitments with suppliers? If yes, list them",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "G"
+  },
+  {
+   "name": "holds_inventory",
+   "label": "Does the business hold inventory?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "section": "H. Inventory",
+   "q": "H"
+  },
+  {
+   "name": "inventory_types",
+   "label": "If yes, what types of inventory are held?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "H"
+  },
+  {
+   "name": "inventory_location",
+   "label": "Where is inventory stored?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "H"
+  },
+  {
+   "name": "inventory_record",
+   "label": "How is inventory recorded?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "inventory_record",
+   "q": "H"
+  },
+  {
+   "name": "inventory_record_other",
+   "label": "Other way inventory is recorded",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "inventory_record",
+    "equals": "other"
+   },
+   "q": "H"
+  },
+  {
+   "name": "stocktake_freq",
+   "label": "How frequently is physical stock-taking conducted?",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "stocktake_freq",
+   "q": "H"
+  },
+  {
+   "name": "stocktake_other",
+   "label": "Other stock-taking frequency",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "stocktake_freq",
+    "includes": "other"
+   },
+   "q": "H"
+  },
+  {
+   "name": "last_stocktake",
+   "label": "When was the last physical stock count conducted?",
+   "type": "date",
+   "required": false,
+   "max": 10,
+   "q": "H"
+  },
+  {
+   "name": "stock_differences",
+   "label": "Were any significant differences identified during the last stock count? If yes, explain",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "H"
+  },
+  {
+   "name": "valuation",
+   "label": "What method is used to value inventory?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "valuation",
+   "q": "H"
+  },
+  {
+   "name": "valuation_other",
+   "label": "Other valuation method",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "valuation",
+    "equals": "other"
+   },
+   "q": "H"
+  },
+  {
+   "name": "obsolete",
+   "label": "Does the business have damaged, obsolete, expired or slow-moving inventory? If yes, how is it treated in the accounts?",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "obsolete",
+   "q": "H"
+  },
+  {
+   "name": "obsolete_other",
+   "label": "Other treatment of damaged or slow-moving inventory",
+   "type": "text",
+   "required": false,
+   "max": 200,
+   "show": {
+    "field": "obsolete",
+    "includes": "other"
+   },
+   "q": "H"
+  },
+  {
+   "name": "obsolete_documented",
+   "label": "Is the treatment supported by appropriate documentation and approved by management?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "documented",
+   "q": "H"
+  },
+  {
+   "name": "third_party_goods",
+   "label": "Are any goods held on behalf of third parties, or held by third parties on behalf of the business?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "H"
+  },
+  {
+   "name": "goods_in_transit",
+   "label": "Are there goods purchased but not yet received, or goods sold or dispatched but not yet delivered?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "H"
+  },
+  {
+   "name": "ppe",
+   "label": "Does the entity own or use significant property, plant and equipment?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "section": "I. Fixed assets",
+   "q": "I"
+  },
+  {
+   "name": "asset_register",
+   "label": "Is a fixed asset register maintained?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "I"
+  },
+  {
+   "name": "asset_register_freq",
+   "label": "How frequently is the fixed asset register updated?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "I"
+  },
+  {
+   "name": "asset_changes",
+   "label": "Were any significant assets purchased, disposed of or transferred during the audit period? If yes, provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "I"
+  },
+  {
+   "name": "leased_assets",
+   "label": "Are any assets leased rather than owned?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "I"
+  },
+  {
+   "name": "credit_sell",
+   "label": "Does the business sell goods or services on credit?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "section": "J. Trade receivables",
+   "q": "J"
+  },
+  {
+   "name": "aged_receivables",
+   "label": "Is an aged receivables report maintained?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "J"
+  },
+  {
+   "name": "overdue_followup",
+   "label": "How are overdue debts followed up?",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "J"
+  },
+  {
+   "name": "old_receivables",
+   "label": "Are there any significant or long-outstanding receivables?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "J"
+  },
+  {
+   "name": "aged_payables",
+   "label": "Is an aged payables report maintained?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "section": "K. Trade payables",
+   "q": "K"
+  },
+  {
+   "name": "overdue_suppliers",
+   "label": "Are there any significantly overdue supplier balances?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "K"
+  },
+  {
+   "name": "disputed_suppliers",
+   "label": "Are there any disputed supplier balances?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "K"
+  },
+  {
+   "name": "employee_count",
+   "label": "How many employees does the entity have?",
+   "type": "text",
+   "required": false,
+   "max": 40,
+   "section": "L. Payroll and human resources",
+   "q": "L"
+  },
+  {
+   "name": "payroll_method",
+   "label": "How is payroll processed?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "payroll_method",
+   "q": "L"
+  },
+  {
+   "name": "payroll_approver",
+   "label": "Who approves payroll?",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "L"
+  },
+  {
+   "name": "employee_records",
+   "label": "Are employee records maintained?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn",
+   "q": "L"
+  },
+  {
+   "name": "statutory_deductions",
+   "label": "Are statutory payroll deductions and related obligations accounted for and remitted?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "L"
+  },
+  {
+   "name": "staff_changes",
+   "label": "Were there any significant staff changes during the audit period?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "L"
+  },
+  {
+   "name": "tax_registered",
+   "label": "Is the entity registered with the relevant tax authorities?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "section": "M. Taxation and statutory compliance",
+   "q": "M"
+  },
+  {
+   "name": "tax_registrations",
+   "label": "List applicable tax registrations",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "tax_regs",
+   "q": "M"
+  },
+  {
+   "name": "returns_on_time",
+   "label": "Are tax returns filed on time?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "M"
+  },
+  {
+   "name": "outstanding_tax",
+   "label": "Are there any outstanding tax liabilities? If yes, provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "M"
+  },
+  {
+   "name": "tax_audits",
+   "label": "Has the entity been subjected to any tax assessment, audit or investigation during the period? If yes, provide details",
+   "type": "textarea",
+   "required": false,
+   "max": 1000,
+   "q": "M"
+  },
+  {
+   "name": "tax_disputes",
+   "label": "Are there any ongoing disputes with tax authorities or other regulatory bodies?",
+   "type": "radio",
+   "required": false,
+   "max": 200,
+   "enum": "yn3",
+   "q": "M"
+  },
+  {
+   "name": "docs_available",
+   "label": "Please indicate which of the following documents are available",
+   "type": "checks",
+   "required": false,
+   "max": 200,
+   "enum": "docs_available",
+   "section": "N. Information required for the audit",
+   "q": "N"
+  },
+  {
+   "name": "docs_available_other",
+   "label": "Other documents available",
+   "type": "text",
+   "required": false,
+   "max": 300,
+   "q": "N"
   }
  ],
  "documents": [
@@ -657,6 +1846,46 @@
   [
    "donor_agreements",
    "Donor agreements and grant reports"
+  ],
+  [
+   "cashbook",
+   "Cashbook"
+  ],
+  [
+   "bank_recs",
+   "Bank reconciliations"
+  ],
+  [
+   "ledgers",
+   "Sales and purchase ledgers"
+  ],
+  [
+   "receivables_payables",
+   "Receivables and payables schedules"
+  ],
+  [
+   "inventory_listing",
+   "Inventory listing"
+  ],
+  [
+   "asset_register",
+   "Fixed asset register"
+  ],
+  [
+   "payroll_records",
+   "Payroll records"
+  ],
+  [
+   "loan_documents",
+   "Loan statements or agreements"
+  ],
+  [
+   "management_letter",
+   "Previous management letter"
+  ],
+  [
+   "contracts",
+   "Major contracts or agreements"
   ],
   [
    "other_docs",

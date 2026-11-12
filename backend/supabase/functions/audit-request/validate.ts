@@ -6,8 +6,9 @@ type Pair = [string, string];
 export interface Field {
   name: string;
   label: string;
-  type: "text" | "email" | "phone" | "tin" | "select" | "radio" | "checks" | "textarea";
+  type: "text" | "email" | "phone" | "tin" | "date" | "select" | "radio" | "checks" | "textarea";
   required: boolean;
+  section?: string;
   max: number;
   enum?: string;
   show?: { field: string; equals?: string; includes?: string };
@@ -86,6 +87,10 @@ export function validateSubmission(input: unknown): Result {
       if (!/^[+\d\s().-]+$/.test(s) || d.length < 7 || d.length > 15) { errors[f.name] = "Enter a valid phone number."; continue; }
     }
     if (f.type === "tin" && !/^[0-9]{10}$/.test(s)) { errors[f.name] = "A TIN has 10 digits."; continue; }
+    if (f.type === "date") {
+      const t = Date.parse(s + "T00:00:00Z");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== s) { errors[f.name] = "Enter a valid date."; continue; }
+    }
     clean[f.name] = s;
   }
   if (raw.accuracy_confirmed !== true) errors.accuracy_confirmed = "Please confirm that the information is true and complete.";
@@ -100,16 +105,24 @@ export function kampalaTime(d: Date): string {
   return new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Kampala", dateStyle: "medium", timeStyle: "short" }).format(d) + " (Kampala)";
 }
 
+// Rows for the PDF and emails. A row whose label starts with "§ " is a section heading.
+export const isHeading = (k: string) => k.startsWith("§ ");
 export function rowsFor(c: Clean): Array<[string, string]> {
   const out: Array<[string, string]> = [];
+  let pending = "";
+  const push = (k: string, val: string) => {
+    if (pending) { out.push(["§ " + pending, ""]); pending = ""; }
+    out.push([k, val]);
+  };
   for (const f of FIELDS) {
+    if (f.section) pending = f.section;
     const v = c[f.name];
     if (f.name === "tin") {
-      if (str(c, "has_tin") === "yes" || v) out.push(["TIN", typeof v === "string" && v ? v : "Not provided"]);
+      if (str(c, "has_tin") === "yes" || v) push("TIN", typeof v === "string" && v ? v : "Not provided");
       continue;
     }
-    if (Array.isArray(v)) out.push([f.label, v.map((x) => enumLabel(f.enum, x)).join(", ")]);
-    else if (typeof v === "string" && v) out.push([f.label, f.enum ? enumLabel(f.enum, v) : v]);
+    if (Array.isArray(v)) push(f.label, v.map((x) => enumLabel(f.enum, x)).join(", "));
+    else if (typeof v === "string" && v) push(f.label, f.enum ? enumLabel(f.enum, v) : v);
   }
   return out;
 }
@@ -118,13 +131,13 @@ export function buildNotification(c: Clean, reference: string, when: Date, docum
   const rows: Array<[string, string]> = [["Reference", reference], ["Received", kampalaTime(when)], ...rowsFor(c)];
   if (documents) rows.push(["Documents", documents]);
   const subject = `New audit service request ${reference}: ${str(c, "org_name")}`;
-  const text = `New audit service request from the Audtix website.\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join("\n") + `\n\nReply to this email to reach the client directly.`;
+  const text = `New audit service request from the Audtix website.\n\n` + rows.map(([k, v]) => (isHeading(k) ? `\n== ${k.slice(2)} ==` : `${k}: ${v}`)).join("\n") + `\n\nReply to this email to reach the client directly.`;
   const html =
     `<div style="font-family:Arial,Helvetica,sans-serif;color:#0B1B33;max-width:640px">` +
     `<h2 style="margin:0 0 4px;color:#0366D0">New audit service request</h2>` +
     `<p style="margin:0 0 16px;color:#475A75">Reference <b>${escapeHtml(reference)}</b>. Reply to this email to reach the client.</p>` +
     `<table style="border-collapse:collapse;width:100%">` +
-    rows.map(([k, v]) => `<tr><td style="padding:8px 12px;border-top:1px solid #D5E2F2;color:#475A75;width:200px;vertical-align:top">${escapeHtml(k)}</td><td style="padding:8px 12px;border-top:1px solid #D5E2F2;vertical-align:top">${escapeHtml(v).replace(/\n/g, "<br>")}</td></tr>`).join("") +
+    rows.map(([k, v]) => isHeading(k) ? `<tr><td colspan="2" style="padding:16px 12px 6px;border-top:2px solid #0366D0;color:#0366D0;font-weight:bold">${escapeHtml(k.slice(2))}</td></tr>` : `<tr><td style="padding:8px 12px;border-top:1px solid #D5E2F2;color:#475A75;width:200px;vertical-align:top">${escapeHtml(k)}</td><td style="padding:8px 12px;border-top:1px solid #D5E2F2;vertical-align:top">${escapeHtml(v).replace(/\n/g, "<br>")}</td></tr>`).join("") +
     `</table></div>`;
   return { subject, text, html };
 }

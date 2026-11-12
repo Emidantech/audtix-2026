@@ -1,6 +1,6 @@
 // Builds ONE PDF: the completed form first, then every uploaded document (PDF pages appended,
 // photos placed one per page). The pdf-lib module is passed in so this runs in Deno and Node.
-import { docLabel, kampalaTime, rowsFor, type Clean } from "./validate.ts";
+import { docLabel, isHeading, kampalaTime, rowsFor, type Clean } from "./validate.ts";
 
 // deno-lint-ignore no-explicit-any
 type Lib = any;
@@ -81,6 +81,13 @@ export async function buildPdf(lib: Lib, c: Clean, reference: string, whenDate: 
 
   const labelW = 170;
   for (const [k, v] of rowsFor(c)) {
+    if (isHeading(k)) {
+      if (y - 48 < M + 20) newPage();
+      y -= 10;
+      page.drawText(latin(k.slice(2)), { x: M, y: y - 4, size: 12, font: bold, color: col(BLUE) });
+      y -= 22;
+      continue;
+    }
     const lines = wrap(v, font, 10.5, width - labelW - 8);
     const klines = wrap(k, font, 9.5, labelW - 8);
     const h = Math.max(lines.length * 14, klines.length * 13) + 12;

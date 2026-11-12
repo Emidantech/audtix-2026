@@ -43,7 +43,7 @@ export interface Deps {
 }
 
 const MIN_FILL_MS = 2500;
-const MAX_BODY = 60000; // JSON part of the form (files are limited separately)
+const MAX_BODY = 160000; // JSON part of the form (files are limited separately)
 const RATE_LIMIT = 8; // submissions per IP per hour
 
 async function sha256Hex(s: string): Promise<string> {
