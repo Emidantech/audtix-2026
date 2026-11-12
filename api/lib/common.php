@@ -163,9 +163,10 @@ function smtp_send(array $c, string $from, array $rcpts, string $headers, string
 
 /** Sends one email to the team (notify_to, cc notify_cc). Returns [ok(bool), error(string)]. Never throws. */
 function send_mail(string $subject, string $text, string $html, array $attachments = [], string $replyTo = ''): array {
-    $to = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_to', '')))));
-    $cc = array_values(array_filter(array_map('trim', explode(',', (string) cfg('notify_cc', '')))));
-    if (!$to) return [false, 'notify_to is not set'];
+    $m = mail_config();
+    $to = array_values(array_filter(array_map('trim', explode(',', (string) $m['notify_to']))));
+    $cc = array_values(array_filter(array_map('trim', explode(',', (string) $m['notify_cc']))));
+    if (!$to) return [false, 'No notification email is set (Admin > Business settings > Email and notifications)'];
     return send_mail_to($to, $cc, $subject, $text, $html, $attachments, $replyTo);
 }
 /** Sends one email to any recipients (used to send a quotation to a client). Returns [ok, error]. Never throws. */
@@ -174,13 +175,17 @@ function send_mail_to(array $to, array $cc, string $subject, string $text, strin
         $to = array_values(array_filter($to, fn($a) => filter_var($a, FILTER_VALIDATE_EMAIL)));
         $cc = array_values(array_filter($cc, fn($a) => filter_var($a, FILTER_VALIDATE_EMAIL)));
         if (!$to) return [false, 'no valid recipient'];
-        $from = (string) cfg('mail_from', 'no-reply@localhost'); $fromName = (string) cfg('mail_from_name', 'Audtix Website');
+        $m = mail_config();
+        $from = (string) $m['mail_from']; $fromName = (string) $m['mail_from_name'];
         $rcpts = array_merge($to, $cc);
         if ($replyTo !== '' && !filter_var($replyTo, FILTER_VALIDATE_EMAIL)) $replyTo = '';
         [$headers, $body] = build_mime($from, $fromName, $to, $cc, $replyTo, $subject, $text, $html, $attachments);
-        if (cfg('smtp_host')) { smtp_send((array) cfg(), $from, $rcpts, $headers, $body); return [true, '']; }
-        if (cfg('mail_transport') === 'file') {  // used by the tests
-            file_put_contents((string) cfg('mail_file'), $headers . "\r\n\r\n" . $body . "\r\n=====\r\n", FILE_APPEND); return [true, ''];
+        if ($m['method'] === 'file') {  // used by the tests
+            file_put_contents((string) $m['mail_file'], $headers . "\r\n\r\n" . $body . "\r\n=====\r\n", FILE_APPEND); return [true, ''];
+        }
+        if ($m['method'] === 'smtp') {
+            if ($m['smtp_host'] === '') return [false, 'SMTP is selected but no SMTP server is set'];
+            smtp_send($m, $from, $rcpts, $headers, $body); return [true, ''];
         }
         // PHP mail(): pass the headers except To and Subject, which mail() sets itself
         $hdr = implode("\r\n", array_filter(explode("\r\n", $headers), fn($l) => !preg_match('/^(To|Subject):/i', $l)));
@@ -188,3 +193,6 @@ function send_mail_to(array $to, array $cc, string $subject, string $text, strin
         return $ok ? [true, ''] : [false, 'mail() returned false'];
     } catch (Throwable $e) { return [false, substr($e->getMessage(), 0, 300)]; }
 }
+
+require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/notify.php';

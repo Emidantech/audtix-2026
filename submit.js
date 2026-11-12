@@ -50,12 +50,12 @@
     var ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     var to = setTimeout(function () { ctl && ctl.abort(); }, opts.files.length ? 120000 : 30000);
     var wa = '<a href="' + esc(waLink("Hello Audtix Systems, I tried to send a " + opts.category + " service request on your website but it did not go through.")) + '" target="_blank" rel="noopener noreferrer">WhatsApp us</a>';
-    function fail(msg) { clearTimeout(to); btn.disabled = false; btn.textContent = label; opts.onMessage(msg); }
+    function fail(msg) { clearTimeout(to); btn.disabled = false; btn.textContent = label; opts.onMessage(msg); if (window.AudtixToast) window.AudtixToast("Your request was not sent. See the message above the button.", "error"); }
     fetch(cfg.submitEndpoint || "api/submit.php", { method: "POST", body: fd, signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
       .then(function (x) {
         clearTimeout(to);
-        if (x.s === 200 && x.j.ok) { btn.disabled = false; btn.textContent = label; return popup(x.j, opts.name, opts.onDone); }
+        if (x.s === 200 && x.j.ok) { btn.disabled = false; btn.textContent = label; if (window.AudtixToast) window.AudtixToast("Your request was sent. Request ID " + x.j.request_id + ".", "ok", 8000); return popup(x.j, opts.name, opts.onDone); }
         if (x.s === 422 && x.j.errors) { btn.disabled = false; btn.textContent = label; opts.onFieldErrors(x.j.errors); return opts.onMessage("Please fix the highlighted fields."); }
         if (x.s === 413) { btn.disabled = false; btn.textContent = label; opts.onFieldErrors({ files: "The files are too large. Remove some and try again." }); return opts.onMessage("Please fix the highlighted fields."); }
         if (x.s === 429) return fail("Too many requests from this network. Please try again later or " + wa + ".");

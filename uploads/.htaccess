@@ -1,0 +1,13 @@
+# Public uploads from the admin panel (logos, favicon, post images, PDFs).
+# Only images and PDFs are served; nothing here can run as a script.
+Options -Indexes -ExecCGI
+<FilesMatch ".*">
+  Require all denied
+</FilesMatch>
+<FilesMatch "(?i)^[0-9]{8}-[a-f0-9]{12}\.(png|jpe?g|webp|gif|ico|pdf)$">
+  Require all granted
+</FilesMatch>
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox"
+</IfModule>

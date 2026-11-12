@@ -4,6 +4,7 @@
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
 $pdo = db(); $me = (int) $admin['id'];
+require_perm(!empty($_GET['id']) || !empty($_POST['id']) ? 'quotes.edit' : 'quotes.add');
 $services = quote_services();
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $q = null;

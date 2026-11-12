@@ -121,3 +121,8 @@ fieldset.field.bad .q-irow input { border-color: #B42318; }
   .q-irow { grid-template-columns: minmax(0, 1fr) 76px 40px; padding: 10px; border: 1px solid #DCE6F2; border-radius: 12px; background: #fff; }
   .q-irow .q-c-spec { grid-column: 1 / -1; grid-row: 2; }
 }
+.q-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+.q-pick a { display: block; text-decoration: none; color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; background: #fff; }
+.q-pick a:hover { border-color: var(--blue-deep); background: var(--blue-soft); }
+.q-pick b { display: block; color: var(--blue-ink); }
+.q-pick span { font-size: 14px; color: var(--muted); }

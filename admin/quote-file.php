@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
+require_perm('quotes.view');
 $s = db()->prepare('SELECT f.*, q.quote_no FROM quote_files f JOIN quotes q ON q.id = f.quote_pk WHERE f.id = ?');
 $s->execute([(int) ($_GET['id'] ?? 0)]); $f = $s->fetch();
 if (!$f || !preg_match('/^[a-f0-9]{24}\.(pdf|jpg|png)$/', $f['stored_name']) || !preg_match('/^QT-[A-Z]+-\d{4}-[A-Z0-9]+$/', $f['quote_no'])) { http_response_code(404); exit('File not found.'); }

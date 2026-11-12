@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
+require_perm('requests.view');
 $pdo = db();
 $cat = $_GET['category'] ?? ''; $st = $_GET['status'] ?? ''; $q = trim((string) ($_GET['q'] ?? '')); $mail = $_GET['mail'] ?? '';
 $page = max(1, (int) ($_GET['page'] ?? 1)); $per = 25;

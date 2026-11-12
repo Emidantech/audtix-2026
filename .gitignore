@@ -9,3 +9,7 @@ api/config.php
 audtix-config.php
 private/
 audtix-storage/
+
+# Files uploaded in the admin panel (keep the .htaccess)
+/uploads/*
+!/uploads/.htaccess

@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
-$admin = require_super(); $pdo = db();
+$admin = require_login(); require_perm('log.view'); $pdo = db();
 $tab = ($_GET['tab'] ?? 'logins') === 'activity' ? 'activity' : 'logins';
 $only = ($_GET['only'] ?? '') === 'failed'; $page = max(1, (int) ($_GET['page'] ?? 1)); $per = 50; $off = ($page - 1) * $per;
 page_head('Login log', $admin, 'log');

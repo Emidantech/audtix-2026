@@ -133,6 +133,7 @@ if ($pdo) {
         $pdo->commit(); $dbOk = true;
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); $dbErr = $e->getMessage(); $dbOk = false; }
 }
+if ($dbOk) notify_admins($pdo, $category . '_request', 'requests', 'New ' . ($category === 'tax' ? 'tax' : 'audit') . ' request ' . $requestId, $clientName . ($svcRow ? ' · ' . $svcRow : ''), 'request.php?id=' . $pk);
 
 /* ---------- 2) email a copy (independent of the database) ---------- */
 $tag = strtoupper($category);
@@ -151,9 +152,11 @@ $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color
       . '<table style="border-collapse:collapse;width:100%;max-width:760px">' . $tr . '</table></div>';
 $att = []; $sum = 0;
 foreach ($stored as $f) { if ($sum + $f['size'] > 14 * 1048576) continue; $sum += $f['size']; $att[] = ['name' => $f['key'] === '' ? $f['orig'] : substr($f['key'], 6) . '_' . $f['orig'], 'mime' => $f['mime'], 'path' => $f['path']]; }
-[$mailOk, $mailErr] = send_mail($subject, $text, $html, $att, $email);
+// The team email can be turned off in Admin > Business settings, but only when the database copy exists.
+$skipMail = $dbOk && !notify_enabled($category);
+[$mailOk, $mailErr] = $skipMail ? [false, 'Email notifications for this form are turned off'] : send_mail($subject, $text, $html, $att, $email);
 if ($pdo && $dbOk) {
-    try { $pdo->prepare('UPDATE requests SET email_status = ?, email_error = ?, updated_at = ? WHERE id = ?')->execute([$mailOk ? 'sent' : 'failed', $mailOk ? null : mb_substr($mailErr, 0, 500), now(), $pk]); } catch (Throwable $e) {}
+    try { $pdo->prepare('UPDATE requests SET email_status = ?, email_error = ?, updated_at = ? WHERE id = ?')->execute([$mailOk ? 'sent' : ($skipMail ? 'pending' : 'failed'), $mailOk ? null : mb_substr($mailErr, 0, 500), now(), $pk]); } catch (Throwable $e) {}
 }
 if (!$dbOk && @is_dir($dir)) @file_put_contents("$dir/status.txt", "db=failed ($dbErr)\nemail=" . ($mailOk ? 'sent' : "failed ($mailErr)") . "\n");
 
