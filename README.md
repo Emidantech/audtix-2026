@@ -1,9 +1,21 @@
+# Audtix Systems website and backend kit
+
+The website files are at the top level of this repository, so Hostinger Git can deploy them straight into `public_html`.
+The `backend/` folder (Supabase functions, migrations, tests) is never served: `.htaccess` returns 404 for it, for `.git`,
+and for documentation, SQL and TypeScript files.
+
+**Deploying on Hostinger:** hPanel, Websites, Manage, Advanced, Git. Use the SSH address, add the deploy key it shows to the
+GitHub repo (Settings, Deploy keys), branch `main`, and leave the install folder empty. Add the webhook it gives you under
+GitHub Settings, Webhooks for automatic deploys.
+
+---
+
 # Audtix tax request form: database and email setup
 
 Clients press **Request tax service**, fill `request-tax.html` (no sign-up) and submit. The request is saved in a database and emailed to **info@audtix.com** with a copy to **audtixsystem@gmail.com**. The email carries **one PDF**: the completed form followed by every document the client uploaded (PDF pages appended, photos placed one per page). The client also gets a confirmation with a reference such as AUD-2026-00001.
 
 ## What is in this folder
-- `site/` the website (request-tax.html, request.js, request.css, config.js and all other pages)
+- `` the website (request-tax.html, request.js, request.css, config.js and all other pages)
 - `backend/supabase/migrations/20261105000000_tax_requests.sql` the database (tables tax_requests and tax_request_events)
 - `backend/supabase/migrations/20261106000000_sme_assessment.sql` the SME assessment questions, the tax_request_files table and a private Storage bucket for the combined PDFs (run it second)
 - `backend/supabase/functions/tax-request/` the function that validates, saves and emails (index.ts, handler.ts, validate.ts, pdf.ts, form-spec.json, .env.example)
@@ -22,13 +34,13 @@ Clients press **Request tax service**, fill `request-tax.html` (no sign-up) and 
    - `supabase functions deploy tax-request --no-verify-jwt`
    - (optional) `supabase functions deploy forex-news --no-verify-jwt`
    - (optional) `supabase functions deploy fin-updates --no-verify-jwt`
-5. Edit `site/config.js`: set `taxRequestEndpoint` to `https://YOUR_REF.supabase.co/functions/v1/tax-request`, then upload the site.
+5. Edit `config.js`: set `taxRequestEndpoint` to `https://YOUR_REF.supabase.co/functions/v1/tax-request`, then upload the site.
 
 Until step 5 is done, the form shows a ready-to-send summary with Email (to info@audtix.com, cc audtixsystem@gmail.com), WhatsApp and Copy buttons, so no request is lost.
 
 ## Financial insights centre (Free tools page)
 A section under the tools collects the latest posts from Ugandan and East African institutions: URA, MoFPED, Bank of Uganda, NSSF, URBRA, URSB, UBOS, UNBS, PPDA, KCCA, Uganda Investment Authority, CMA, USE, IRA, plus Kenya (CBK, Treasury, KRA, KNBS), Tanzania (BoT, TRA), Rwanda (BNR, RRA) and the EAC. Visitors can filter by topic and country, and the three newest items also show in the Forex desk sidebar. It needs no attention once set up.
-- Deploy `supabase functions deploy fin-updates --no-verify-jwt`, then put its URL in `site/config.js` as `updatesEndpoint`.
+- Deploy `supabase functions deploy fin-updates --no-verify-jwt`, then put its URL in `config.js` as `updatesEndpoint`.
 - The function reads each institution's own news feed (trying the usual feed addresses). If an institution has no readable feed it falls back to a news search limited to that institution's own website. Results are cached for 20 minutes, so it stays quick and polite to their servers.
 - Not every government website publishes a feed, so some institutions may show nothing. Open the function URL in a browser: the `sources` list in the answer shows, for each institution, whether it returned posts and the error if not. Tell me which are empty and I can add the right feed address in `functions/_shared/sources.json`.
 - To add or remove an institution, edit `functions/_shared/sources.json` and regenerate the site file `fin-sources.js` (or ask me to).
@@ -39,7 +51,7 @@ The Free tools page loads live data every time it is opened and refreshes every 
 - Rates: ExchangeRate-API (open.er-api.com), with a backup from the currency-api project on jsDelivr. The page shows when the source last updated.
 - Trend insights are calculated from those rates plus 7, 30 and 90 day history (currency-api). Nothing in them is hand-written.
 - Headlines: Google News search results, kept only when the publisher is on the trusted list in `tools.js` (Reuters, Bloomberg, BBC, Daily Monitor, New Vision, central banks and similar) and published in the last 21 days. Official sources (Bank of Uganda, Federal Reserve, ECB, Bank of England) are linked directly.
-- Recommended: deploy `supabase functions deploy forex-news --no-verify-jwt` and put its URL in `site/config.js` as `newsEndpoint`. Without it the page uses the public rss2json service, which has usage limits.
+- Recommended: deploy `supabase functions deploy forex-news --no-verify-jwt` and put its URL in `config.js` as `newsEndpoint`. Without it the page uses the public rss2json service, which has usage limits.
 - If a feed cannot be reached the page says so. It never shows old figures as current. Last good rates and headlines are kept in the visitor's browser for up to 3 days and 6 hours, and labelled as saved.
 - These feeds are called straight from the visitor's browser, so they only work on the real website. The preview page inside Claude blocks outside connections and shows the "could not be loaded" state.
 
@@ -65,7 +77,7 @@ Options for dropdowns and services live in `form-spec.json` (keep the SQL CHECK 
 
 ## Request for Audit Service form (added November 2026)
 
-A second form, separate from the tax form. It lives at `site/request-audit.html` and is reached only from the
+A second form, separate from the tax form. It lives at `request-audit.html` and is reached only from the
 "Request for Audit Service" button inside the Audit and assurance card on the home page.
 
 Setup is the same as for the tax form:
@@ -73,7 +85,7 @@ Setup is the same as for the tax form:
 1. Run `backend/supabase/migrations/20261110000000_audit_requests.sql` in the Supabase SQL editor (run the two tax migrations first).
 2. Deploy the function: `supabase functions deploy audit-request --no-verify-jwt`. It uses the same secrets as `tax-request`
    (RESEND_API_KEY, MAIL_FROM, NOTIFY_TO, NOTIFY_CC, ALLOWED_ORIGINS, IP_SALT), so there is nothing new to set.
-3. Paste the function URL into `site/config.js` as `auditRequestEndpoint`.
+3. Paste the function URL into `config.js` as `auditRequestEndpoint`.
 
 Submissions go to info@audtix.com with a copy to audtixsystem@gmail.com. The form and every uploaded file arrive as one PDF.
 Staff can read the data in the `audit_requests` table. The questions live in `functions/audit-request/form-spec.json`
