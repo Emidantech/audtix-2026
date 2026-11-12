@@ -15,7 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "This is a test from Admin > Business settings > Email and notifications.\nMethod: {$m['method']}\nSent by: {$admin['full_name']}\nTime (UTC): " . now(),
             '<div style="font-family:Arial,sans-serif;font-size:15px"><p>This is a test from <b>Admin &gt; Business settings &gt; Email and notifications</b>.</p><p>Method: <b>' . h($m['method']) . '</b><br>Sent by: ' . h($admin['full_name']) . '<br>Time (UTC): ' . h(now()) . '</p><p>If you can read this, email is working.</p></div>');
         log_activity($me, 'mail_test', $to, $ok ? 'sent' : $err);
-        flash($ok ? 'Test email sent to ' . $to . '. Check the inbox (and the spam folder).' : 'The test email failed: ' . $err, $ok ? 'ok' : 'bad');
+        $used = $m['method'] === 'smtp' ? ' [server ' . $m['smtp_host'] . ':' . $m['smtp_port'] . ' ' . strtoupper($m['smtp_secure']) . ', user ' . ($m['smtp_user'] ?: 'none') . ', password ' . ['settings' => 'from these settings, ' . mb_strlen($m['smtp_pass']) . ' characters', 'config' => 'from the config file', 'none' => 'not set'][$m['pass_source']] . ']' : '';
+        $why = str_contains($err, '535') ? ' Wrong username or password: use the full email address and the mailbox password.' : '';
+        flash($ok ? 'Test email sent to ' . $to . '.' : 'Test failed: ' . $err . $why . $used, $ok ? 'ok' : 'bad');
         redirect('mail-settings.php');
     }
     $method = in_array($_POST['mail_method'] ?? '', ['smtp', 'mail'], true) ? $_POST['mail_method'] : 'smtp';
@@ -30,11 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!preg_match('/^[a-z0-9.-]{3,190}$/i', $host)) $err[] = 'Enter the SMTP server name, for example smtp.hostinger.com.';
         if ($port < 1 || $port > 65535) $err[] = 'Enter the SMTP port (465 for SSL, 587 for TLS).';
         $save += ['smtp_host' => $host, 'smtp_port' => (string) $port, 'smtp_secure' => $sec, 'smtp_user' => mb_substr(trim((string) ($_POST['smtp_user'] ?? '')), 0, 190)];
-        $pw = (string) ($_POST['smtp_pass'] ?? '');
+        $pw = trim((string) ($_POST['smtp_pass'] ?? ''));
+        $hasSaved = (settings_all()['smtp_pass'] ?? '') !== '' && secret_decrypt(settings_all()['smtp_pass']) !== '';
         if ($pw !== '') $save['smtp_pass'] = secret_encrypt($pw);
-        if (!empty($_POST['clear_pass'])) $save['smtp_pass'] = '';
+        if (!empty($_POST['clear_pass'])) { $save['smtp_pass'] = ''; $hasSaved = false; }
+        if ($save['smtp_user'] !== '' && $pw === '' && !$hasSaved) $err[] = 'Enter the SMTP password.';
     }
-    if ($err) { flash(implode(' ', $err), 'bad'); redirect('mail-settings.php'); }
+    if ($err) { $d = $_POST; unset($d['smtp_pass'], $d['_csrf']); $_SESSION['mail_draft'] = $d; flash(implode(' ', $err), 'bad'); redirect('mail-settings.php'); }
     $save += ['mail_from' => $from, 'mail_from_name' => mb_substr(trim((string) ($_POST['mail_from_name'] ?? '')), 0, 120), 'notify_to' => $to, 'notify_cc' => $cc,
               'notify_on_quote' => empty($_POST['notify_on_quote']) ? '0' : '1', 'notify_on_tax' => empty($_POST['notify_on_tax']) ? '0' : '1', 'notify_on_audit' => empty($_POST['notify_on_audit']) ? '0' : '1'];
     settings_save($save, $me);
@@ -44,14 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $m = mail_config(); $s = settings_all();
-$hasDbPass = ($s['smtp_pass'] ?? '') !== ''; $hasCfgPass = !$hasDbPass && (string) cfg('smtp_pass', '') !== '';
+// after a failed save, show what was typed (never the password)
+$draft = $_SESSION['mail_draft'] ?? null; unset($_SESSION['mail_draft']);
+if ($draft) { foreach (['smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'mail_from', 'mail_from_name', 'notify_to', 'notify_cc'] as $k) if (isset($draft[$k])) $m[$k] = (string) $draft[$k]; if (in_array($draft['mail_method'] ?? '', ['smtp', 'mail'], true)) $m['method'] = $draft['mail_method']; }
+$hasDbPass = ($s['smtp_pass'] ?? '') !== '' && $m['pass_source'] === 'settings' && $m['smtp_pass'] !== '';
 $ro = can('mail.edit') ? '' : ' disabled';
 $method = $m['method'] === 'file' ? 'smtp' : $m['method'];
 page_head('Email settings', $admin, 'mail', [['Business settings', 'settings.php'], ['Email settings', null]]);
 ?>
 <div class="row g-3">
 <div class="col-xl-8">
-<form method="post"><?= csrf_field() ?>
+<form method="post" autocomplete="off"><?= csrf_field() ?>
   <div class="card"><div class="card-header"><h3 class="card-title">Mail server</h3></div><div class="card-body">
     <div class="row g-2 mb-3">
       <div class="col-md-6"><label class="card p-3 mb-0"><span class="form-check"><input class="form-check-input" type="radio" name="mail_method" value="smtp"<?= $method === 'smtp' ? ' checked' : '' ?><?= $ro ?>><span class="form-check-label fw-semibold">SMTP</span></span></label></div>
@@ -65,8 +72,8 @@ page_head('Email settings', $admin, 'mail', [['Business settings', 'settings.php
         <div class="col-md-6"><label class="form-label" for="smtp_host">SMTP server</label><input class="form-control" id="smtp_host" name="smtp_host" value="<?= h($m['smtp_host']) ?>"<?= $ro ?>></div>
         <div class="col-6 col-md-3"><label class="form-label" for="smtp_port">Port</label><input class="form-control" id="smtp_port" name="smtp_port" inputmode="numeric" value="<?= h((string) $m['smtp_port']) ?>"<?= $ro ?>></div>
         <div class="col-6 col-md-3"><label class="form-label" for="smtp_secure">Security</label><select class="form-select" id="smtp_secure" name="smtp_secure"<?= $ro ?>><?php foreach (['ssl' => 'SSL (465)', 'tls' => 'STARTTLS (587)', 'none' => 'None (not advised)'] as $k => $l): ?><option value="<?= $k ?>"<?= $m['smtp_secure'] === $k ? ' selected' : '' ?>><?= $l ?></option><?php endforeach; ?></select></div>
-        <div class="col-md-6"><label class="form-label" for="smtp_user">Username</label><input class="form-control" id="smtp_user" name="smtp_user" autocomplete="off" value="<?= h($m['smtp_user']) ?>"<?= $ro ?>></div>
-        <div class="col-md-6"><label class="form-label" for="smtp_pass">Password</label><input class="form-control" id="smtp_pass" name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $hasDbPass || $hasCfgPass ? '••••••••' : '' ?>"<?= $ro ?>>
+        <div class="col-md-6"><label class="form-label" for="smtp_user">Username</label><input class="form-control" id="smtp_user" name="smtp_user" autocomplete="off" readonly data-unlock value="<?= h($m['smtp_user']) ?>"<?= $ro ?>></div>
+        <div class="col-md-6"><label class="form-label" for="smtp_pass">Password</label><input class="form-control<?= $hasDbPass ? '' : ' is-invalid' ?>" id="smtp_pass" name="smtp_pass" type="password" autocomplete="new-password" readonly data-unlock placeholder="<?= $hasDbPass ? 'Saved (' . mb_strlen($m['smtp_pass']) . ' characters)' : 'Not set' ?>"<?= $ro ?>>
           <?php if ($hasDbPass): ?><div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="clear_pass" value="1" id="clear_pass"<?= $ro ?>><label class="form-check-label small" for="clear_pass">Remove password</label></div><?php endif; ?></div>
       </div>
     </div>

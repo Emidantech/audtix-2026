@@ -114,3 +114,8 @@
     body.setRangeText(out, s, en, "end"); body.focus();
   });
 })();
+/* Stop browsers auto-filling the admin login into other forms (e.g. SMTP username/password) */
+document.querySelectorAll("input[data-unlock]").forEach(function (i) {
+  var un = function () { i.removeAttribute("readonly"); };
+  i.addEventListener("focus", un); i.addEventListener("pointerdown", un);
+});

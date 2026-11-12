@@ -56,15 +56,20 @@ function secret_decrypt(string $stored): string {
 /** Email settings: database first, then the config file. */
 function mail_config(): array {
     $s = settings_all(); $c = cfg();
-    $pick = fn(string $k, $d = '') => ($s[$k] ?? '') !== '' ? $s[$k] : ($c[$k] ?? $d);
     $method = $s['mail_method'] ?? '';
+    // Once email is set up in the admin panel, those settings are used as they are (no mixing with the config file,
+    // which could hold an old or sample SMTP password). Before that, the config file is used.
+    $fromDb = $method !== '';
+    $pick = fn(string $k, $d = '') => $fromDb ? (($s[$k] ?? '') !== '' ? $s[$k] : (in_array($k, ['smtp_host', 'smtp_user'], true) ? '' : ($c[$k] ?? $d))) : (($c[$k] ?? '') !== '' ? $c[$k] : $d);
     if ($method === '') $method = !empty($c['smtp_host']) ? 'smtp' : 'mail';
     if (($c['mail_transport'] ?? '') === 'file') $method = 'file';   // tests
     return [
         'method' => $method,
         'mail_from' => $pick('mail_from', 'no-reply@localhost'), 'mail_from_name' => $pick('mail_from_name', 'Audtix Website'),
         'smtp_host' => $pick('smtp_host'), 'smtp_port' => (int) $pick('smtp_port', 465), 'smtp_secure' => $pick('smtp_secure', 'ssl'),
-        'smtp_user' => $pick('smtp_user'), 'smtp_pass' => ($s['smtp_pass'] ?? '') !== '' ? secret_decrypt($s['smtp_pass']) : (string) ($c['smtp_pass'] ?? ''),
+        'smtp_user' => $pick('smtp_user'), 'smtp_pass' => $fromDb ? (($s['smtp_pass'] ?? '') !== '' ? secret_decrypt($s['smtp_pass']) : '') : (string) ($c['smtp_pass'] ?? ''),
+        'pass_source' => $fromDb ? ((($s['smtp_pass'] ?? '') !== '') ? 'settings' : 'none') : ((string) ($c['smtp_pass'] ?? '') !== '' ? 'config' : 'none'),
+        'from_db' => $fromDb,
         'notify_to' => $pick('notify_to'), 'notify_cc' => $pick('notify_cc'),
         'mail_file' => $c['mail_file'] ?? '',
     ];
