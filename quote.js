@@ -246,8 +246,30 @@
   });
 
   /* ---------- start ---------- */
-  SERVICE = (new URLSearchParams(location.search).get("service") || "").toLowerCase();
-  SPEC = window.QUOTE_FORMS;
-  if (SPEC && SPEC.services) { renderHeader(); if (SPEC.services[SERVICE]) render(); }
-  else $("#q-loading").innerHTML = '<p>The form could not be loaded. Please reload the page, email <a href="mailto:info@audtix.com">info@audtix.com</a> or WhatsApp +256 701 287 388.</p>';
+  /* Which service? ?service=erp (main), also ?s=erp, #erp or a friendly name like ?service=hardware */
+  var ALIAS = { hardware: "ict", "ict-hardware": "ict", fintech: "custom", "custom-fintech": "custom", software: "dev", development: "dev",
+    networking: "net", network: "net", advisory: "adv", "enterprise-advisory": "adv", security: "cyber", "cyber-security": "cyber", efris: "ura", "ura-integration": "ura" };
+  function pickService() {
+    var q = new URLSearchParams(location.search), v = q.get("service") || q.get("s") || location.hash.replace(/^#/, "") || "";
+    v = decodeURIComponent(v).trim().toLowerCase();
+    return ALIAS[v] || v;
+  }
+  function start() {
+    SPEC = window.QUOTE_FORMS;
+    SERVICE = pickService();
+    if (!SPEC || !SPEC.services) return false;
+    renderHeader();
+    if (SPEC.services[SERVICE]) render();
+    return true;
+  }
+  function failed() { $("#q-loading").innerHTML = '<p>The form could not be loaded. Please reload the page, email <a href="mailto:info@audtix.com">info@audtix.com</a> or WhatsApp +256 701 287 388.</p>'; }
+  window.addEventListener("hashchange", function () { if (SPEC) location.reload(); });
+  if (!start()) {
+    // quote-forms.js did not load (old cached page, slow network): load it now, then try once more
+    var sc = document.createElement("script");
+    sc.src = "quote-forms.js?v=" + Date.now();
+    sc.onload = function () { if (!start()) failed(); };
+    sc.onerror = failed;
+    document.head.appendChild(sc);
+  }
 })();
