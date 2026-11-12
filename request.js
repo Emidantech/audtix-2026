@@ -38,40 +38,80 @@
   function niceDate(d) { var p = d.split("-"); return p.length === 3 ? (+p[2]) + " " + MONTHS[+p[1] - 1] + " " + p[0] : d; }
   function taxPeriods() { var a = val("tax_period_from"), b = val("tax_period_to"); return a && b ? niceDate(a) + " to " + niceDate(b) : ""; }
   // "To" can never be before "From"
-  /* Tax period: month + year pickers (work the same in every browser), plus one-tap financial years (July to June). */
+  /* Tax period: calendar pop-ups that pick a month and year (From = first day, To = last day of the month),
+     plus one-tap financial years (July to June). Same look in every browser. */
   (function () {
-    var fm = $("#f-from-m"), fy = $("#f-from-y"), tm = $("#f-to-m"), ty = $("#f-to-y"), sum = $("#period-sum"), quick = $("#fy-quick");
-    var now = new Date(), cy = now.getFullYear();
-    [fy, ty].forEach(function (sel) { for (var y = cy + 1; y >= cy - 15; y--) { var o = document.createElement("option"); o.value = o.textContent = String(y); sel.appendChild(o); } });
+    var sum = $("#period-sum"), quick = $("#fy-quick"), now = new Date(), cy = now.getFullYear();
+    var MN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var sel = { from: null, to: null }; // {y, m} with m 1..12
     var fyNow = now.getMonth() >= 6 ? cy : cy - 1, html = "<span>Quick pick:</span>";
     for (var y = fyNow; y > fyNow - 4; y--) html += '<button type="button" data-fy="' + y + '">FY ' + y + "/" + String(y + 1).slice(2) + "</button>";
     html += '<button type="button" data-cal="' + (cy - 1) + '">Year ' + (cy - 1) + "</button>";
     quick.innerHTML = html;
-    function last(y, m) { return new Date(+y, +m, 0).getDate(); }
+    function key(v) { return v ? v.y * 12 + v.m : null; }
+    function pad(n) { return ("0" + n).slice(-2); }
     function update() {
-      var a = fm.value && fy.value ? fy.value + "-" + fm.value + "-01" : "", b = tm.value && ty.value ? ty.value + "-" + tm.value + "-" + ("0" + last(ty.value, tm.value)).slice(-2) : "";
-      form.elements.tax_period_from.value = a; form.elements.tax_period_to.value = b;
+      var f = sel.from, t = sel.to;
+      form.elements.tax_period_from.value = f ? f.y + "-" + pad(f.m) + "-01" : "";
+      form.elements.tax_period_to.value = t ? t.y + "-" + pad(t.m) + "-" + pad(new Date(t.y, t.m, 0).getDate()) : "";
+      ["from", "to"].forEach(function (k) { var v = sel[k]; $(".mp-val", $('[data-mp="' + k + '"]', form)).textContent = v ? FULL[v.m - 1] + " " + v.y : "Pick month and year"; $('[data-mp="' + k + '"]', form).classList.toggle("set", !!v); });
       $$("button", quick).forEach(function (x) { x.classList.remove("on"); });
-      if (a && b && b >= a) {
-        var months = (+ty.value - +fy.value) * 12 + (+tm.value - +fm.value) + 1;
-        sum.textContent = "Selected: " + niceDate(a) + " to " + niceDate(b) + " (" + months + " month" + (months === 1 ? "" : "s") + ")";
-        sum.className = "period-sum ok"; setErr("tax_periods", "");
+      if (f && t && key(t) >= key(f)) {
+        var n = key(t) - key(f) + 1, a = form.elements.tax_period_from.value, b = form.elements.tax_period_to.value;
+        sum.textContent = "Selected: " + niceDate(a) + " to " + niceDate(b) + " (" + n + " month" + (n === 1 ? "" : "s") + ")"; sum.className = "period-sum ok"; setErr("tax_periods", "");
         $$("button", quick).forEach(function (x) { var k = x.getAttribute("data-fy"), c = x.getAttribute("data-cal"); if ((k && a === k + "-07-01" && b === (+k + 1) + "-06-30") || (c && a === c + "-01-01" && b === c + "-12-31")) x.classList.add("on"); });
-      } else if (a && b) { sum.textContent = "The end must be after the start."; sum.className = "period-sum bad"; }
+      } else if (f && t) { sum.textContent = "The end must be after the start."; sum.className = "period-sum bad"; }
       else sum.textContent = "";
     }
-    function set(a1, a2, b1, b2) { fm.value = a1; fy.value = a2; tm.value = b1; ty.value = b2; update(); }
+    function close(except) { $$(".mp", form).forEach(function (w) { if (w === except) return; $(".mp-pop", w).hidden = true; $(".mp-btn", w).setAttribute("aria-expanded", "false"); }); }
+    $$(".mp", form).forEach(function (w) {
+      var k = w.getAttribute("data-mp"), btn = $(".mp-btn", w), pop = $(".mp-pop", w), grid = $(".mp-grid", pop), yr = $(".mp-year", pop), view = cy;
+      function draw() {
+        yr.textContent = view;
+        var f = key(sel.from), t = key(sel.to), out = "";
+        for (var m = 1; m <= 12; m++) {
+          var kk = view * 12 + m, cls = "mp-m";
+          if ((k === "from" ? f : t) === kk) cls += " on";
+          if (f && t && kk > f && kk < t) cls += " in";
+          if ((k === "to" && f && kk === f) || (k === "from" && t && kk === t)) cls += " edge";
+          if (kk > (cy + 1) * 12 + 12) cls += " off";
+          out += '<button type="button" class="' + cls + '" data-m="' + m + '" aria-label="' + FULL[m - 1] + " " + view + '">' + MN[m - 1] + "</button>";
+        }
+        grid.innerHTML = out;
+        $(".mp-next", pop).disabled = view >= cy + 1; $(".mp-prev", pop).disabled = view <= cy - 25;
+      }
+      function open() {
+        close(w); var cur = sel[k] || (k === "to" && sel.from ? { y: sel.from.y + (sel.from.m === 1 ? 0 : 1) } : null);
+        view = cur ? cur.y : (k === "from" ? fyNow : cy); draw(); pop.hidden = false; btn.setAttribute("aria-expanded", "true");
+        var t = $(".mp-m.on", grid) || $(".mp-m", grid); if (t) t.focus();
+      }
+      btn.addEventListener("click", function (e) { e.stopPropagation(); if (pop.hidden) open(); else close(); });
+      pop.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (e.target.closest(".mp-prev")) { view--; draw(); return; }
+        if (e.target.closest(".mp-next")) { view++; draw(); return; }
+        var b = e.target.closest(".mp-m"); if (!b || b.classList.contains("off")) return;
+        sel[k] = { y: view, m: +b.getAttribute("data-m") };
+        // picking a start with no end yet fills 12 months
+        if (k === "from" && !sel.to) { var d = new Date(view, sel.from.m - 1 + 11, 1); sel.to = { y: d.getFullYear(), m: d.getMonth() + 1 }; }
+        close(); update(); btn.focus();
+      });
+      pop.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") { close(); btn.focus(); return; }
+        var ms = $$(".mp-m", grid), i = ms.indexOf(document.activeElement); if (i < 0) return;
+        var d = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 4, ArrowUp: -4 }[e.key];
+        if (d) { e.preventDefault(); var j = i + d; if (j >= 0 && j < 12) ms[j].focus(); }
+      });
+    });
+    document.addEventListener("click", function () { close(); });
     quick.addEventListener("click", function (e) {
       var x = e.target.closest("button"); if (!x) return;
       var k = x.getAttribute("data-fy"), c = x.getAttribute("data-cal");
-      if (k) set("07", k, "06", String(+k + 1)); else set("01", c, "12", c);
+      if (k) { sel.from = { y: +k, m: 7 }; sel.to = { y: +k + 1, m: 6 }; } else { sel.from = { y: +c, m: 1 }; sel.to = { y: +c, m: 12 }; }
+      close(); update();
     });
-    [fm, fy, tm, ty].forEach(function (el) { el.addEventListener("change", function () {
-      // picking a start fills a sensible end (12 months later) if no end chosen yet
-      if ((el === fm || el === fy) && fm.value && fy.value && !tm.value && !ty.value) { var d = new Date(+fy.value, +fm.value - 1 + 11, 1); tm.value = ("0" + (d.getMonth() + 1)).slice(-2); ty.value = String(d.getFullYear()); }
-      update();
-    }); });
-    form.addEventListener("reset", function () { setTimeout(update, 0); });
+    form.addEventListener("reset", function () { sel.from = sel.to = null; setTimeout(update, 0); });
   })();
   function uraDetails() {
     var out = [];

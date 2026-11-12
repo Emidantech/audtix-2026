@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /* Quotation helpers shared by api/quote.php and the admin panel.
-   The form definition lives in /quote-forms.json; the same file drives quote.html. */
+   The form definition lives in /quote-forms.js; the same file drives quote.html. */
 
 const QUOTE_STATUSES = [
     'pending'   => 'Pending',
@@ -26,8 +26,10 @@ const QUOTE_MAX_FILE = 5 * 1024 * 1024, QUOTE_MAX_TOTAL = 15 * 1024 * 1024, QUOT
 function quote_spec(): array {
     static $spec = null;
     if ($spec === null) {
-        $spec = json_decode((string) @file_get_contents(dirname(__DIR__, 2) . '/quote-forms.json'), true);
-        if (!is_array($spec) || empty($spec['services'])) throw new RuntimeException('quote-forms.json is missing or invalid');
+        $raw = (string) @file_get_contents(dirname(__DIR__, 2) . '/quote-forms.js');
+        $mark = 'window.QUOTE_FORMS ='; $a = strpos($raw, $mark); $b = strrpos($raw, ';');
+        $spec = ($a !== false && $b !== false && $b > $a) ? json_decode(substr($raw, $a + strlen($mark), $b - $a - strlen($mark)), true) : null;
+        if (!is_array($spec) || empty($spec['services'])) throw new RuntimeException('quote-forms.js is missing or invalid');
     }
     return $spec;
 }

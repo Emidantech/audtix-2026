@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /*
  * Public endpoint for quote.html?service=... (all quotation forms).
- * The answers are checked against /quote-forms.json, saved to MySQL (quotes, quote_files, quote_events)
+ * The answers are checked against /quote-forms.js, saved to MySQL (quotes, quote_files, quote_events)
  * and emailed to the team. As with the request forms, the two steps are independent and a JSON copy
  * is kept on disk, so a quotation is only lost if both the database and the email fail.
  */

@@ -1,6 +1,6 @@
 <?php
 /* Create a quotation (e.g. a phone or walk-in enquiry) or edit an existing one.
-   The fields come from /quote-forms.json, the same definition as the public form. */
+   The fields come from /quote-forms.js, the same definition as the public form. */
 require __DIR__ . '/inc/boot.php';
 $admin = require_login();
 $pdo = db(); $me = (int) $admin['id'];

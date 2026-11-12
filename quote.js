@@ -1,5 +1,5 @@
 /* Reusable quotation form: quote.html?service=erp|custom|ura|cyber|dev|net|adv|ict
-   The fields come from quote-forms.json (the same file the server checks against), so one page serves every service. */
+   The fields come from quote-forms.js (the same file the server checks against), so one page serves every service. */
 (function () {
   var form = document.getElementById("q-form");
   if (!form) return;
@@ -247,8 +247,7 @@
 
   /* ---------- start ---------- */
   SERVICE = (new URLSearchParams(location.search).get("service") || "").toLowerCase();
-  fetch(cfg.quoteFormsUrl || "quote-forms.json", { cache: "no-cache" })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (spec) { SPEC = spec; renderHeader(); if (SPEC.services[SERVICE]) render(); })
-    .catch(function () { $("#q-loading").innerHTML = '<p>The form could not be loaded. Please reload the page, email <a href="mailto:info@audtix.com">info@audtix.com</a> or WhatsApp +256 701 287 388.</p>'; });
+  SPEC = window.QUOTE_FORMS;
+  if (SPEC && SPEC.services) { renderHeader(); if (SPEC.services[SERVICE]) render(); }
+  else $("#q-loading").innerHTML = '<p>The form could not be loaded. Please reload the page, email <a href="mailto:info@audtix.com">info@audtix.com</a> or WhatsApp +256 701 287 388.</p>';
 })();
