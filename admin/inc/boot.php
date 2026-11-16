@@ -85,3 +85,4 @@ const STATUSES = ['new' => 'New', 'in_review' => 'In review', 'awaiting_client' 
 require __DIR__ . '/perms.php';
 require __DIR__ . '/uploads.php';
 require __DIR__ . '/layout.php';
+require_once __DIR__ . '/docs.php';

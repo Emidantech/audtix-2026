@@ -77,3 +77,21 @@ The Free tools page loads live data every time it is opened and refreshes every 
 - Recommended: deploy `supabase functions deploy forex-news --no-verify-jwt` and put its URL in `config.js` as `newsEndpoint`. Without it the page uses the public rss2json service, which has usage limits.
 - If a feed cannot be reached the page says so. It never shows old figures as current. Last good rates and headlines are kept in the visitor's browser for up to 3 days and 6 hours, and labelled as saved.
 - These feeds are called straight from the visitor's browser, so they only work on the real website. The preview page inside Claude blocks outside connections and shows the "could not be loaded" state.
+
+## Business documents (requisition, quotation, invoice, budget, proforma invoice, receipt)
+
+An addition to the admin panel; nothing existing was changed. It appears in the sidebar under **Business documents**.
+
+**Install:** new databases get it from `database/audtix.mysql.sql`. An existing database: import `database/migrations/2026-11-16-business-documents.sql` once in phpMyAdmin (safe to re-run). It adds company settings, customers, products and services, documents with lines, numbering counters, the audit trail and three starter roles (Documents: sales, accountant, read only).
+
+**Set up:** open **Administration, Document settings** and fill in the company TIN, bank details, logo, default currency, VAT and terms. Give people access under **Roles and permissions**: Business documents (view, create, edit drafts, approve and post, download and print, cancel or void, edit posted), Customers, Products and services, Document reports, Document settings.
+
+**Rules**
+- Flow: Requisition, Quotation, Invoice or Proforma, Receipt. Budgets stand alone. A conversion needs a posted source and carries customer and lines forward.
+- Numbers such as `INV-2026-00001` come from a locked counter, so they are never repeated.
+- Draft, Posted, Cancelled. Nothing is ever deleted. Posted documents are locked: only the super admin or a role with "Edit posted documents" can change one, with a reason, and each earlier version is kept. Receipts can only be edited by the super admin.
+- Receipts are voided, never deleted: the reason, user and time are recorded. A receipt against an invoice cannot exceed what is still owed.
+- All totals are recalculated on the server; every action goes to the audit trail.
+- Reports (Document reports): filter by period, customer, type, reference, status and creator; export to PDF and Excel.
+
+The module was tested end to end on SQLite (permissions, numbering, totals, posting and locking, conversions, receipts, PDFs, Excel, reports). The MySQL SQL has not been run on a real server here, so the import is its first real check.
