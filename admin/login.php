@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
-if (me()) redirect('index.php');
+if (me()) redirect('dashboard.php');
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_csrf();
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare('UPDATE admins SET failed_attempts = 0, locked_until = NULL, last_login_at = ?, last_login_ip = ?, updated_at = ? WHERE id = ?')->execute([now(), $ip, now(), $a['id']]);
                 if (password_needs_rehash($a['password_hash'], PASSWORD_DEFAULT)) $pdo->prepare('UPDATE admins SET password_hash = ? WHERE id = ?')->execute([make_hash($p), $a['id']]);
                 log_login((int) $a['id'], $u, true, 'ok');
-                redirect('index.php');
+                redirect('dashboard.php');
             } else {
                 if ($a && $ok && !(int) $a['is_active']) { log_login((int) $a['id'], $u, false, 'disabled'); }
                 elseif ($a) {

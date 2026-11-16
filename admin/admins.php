@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
+require_once __DIR__ . '/inc/docs.php';
 $admin = require_super();
 $pdo = db(); $secret = null; $secretFor = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -18,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pw = temp_password();
                 $pdo->prepare('INSERT INTO admins (username, email, full_name, phone, job_title, role, password_hash, is_active, must_change_pw, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,1,1,?,?,?)')
                     ->execute([$u, $em, mb_substr($fn, 0, 120), mb_substr(trim((string) ($_POST['phone'] ?? '')), 0, 40) ?: null, mb_substr(trim((string) ($_POST['job_title'] ?? '')), 0, 120) ?: null, $role, make_hash($pw), $admin['id'], now(), now()]);
+                $newId = (int) $pdo->lastInsertId(); if ($role !== 'super_admin') set_perms($pdo, $newId, (array) ($_POST['perms'] ?? []));
                 log_activity((int) $admin['id'], 'admin_created', $u, $role);
                 $secret = $pw; $secretFor = $u; flash('Admin created. Copy the temporary password now, it is shown only once.');
             }
@@ -34,6 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pw = temp_password();
             $pdo->prepare('UPDATE admins SET password_hash = ?, must_change_pw = 1, failed_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?')->execute([make_hash($pw), now(), $tid]);
             log_activity((int) $admin['id'], 'admin_password_reset', $t['username']); $secret = $pw; $secretFor = $t['username']; flash('Password reset. Copy the temporary password now, it is shown only once.');
+        } elseif ($act === 'perms') {
+            if ($t['role'] === 'super_admin') flash('A super admin always has every permission.', 'bad');
+            else { set_perms($pdo, $tid, (array) ($_POST['perms'] ?? [])); log_activity((int) $admin['id'], 'admin_permissions', $t['username'], implode(',', array_intersect((array) ($_POST['perms'] ?? []), array_keys(PERMS)))); flash('Permissions saved for ' . $t['full_name'] . '.'); }
         } elseif ($act === 'role') {
             $role = ($_POST['role'] ?? '') === 'super_admin' ? 'super_admin' : 'admin';
             if ((int) $t['id'] === (int) $admin['id'] && $role !== 'super_admin') flash('You cannot remove your own super admin role.', 'bad');
@@ -43,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($secret === null) redirect('admins.php');
 }
 $list = $pdo->query('SELECT a.*, c.full_name AS creator FROM admins a LEFT JOIN admins c ON c.id = a.created_by ORDER BY a.id')->fetchAll();
+function perm_boxes(array $have): string { $o = '<div class="perm-grid">'; foreach (PERMS as $k => $l) $o .= '<label class="inline"><input type="checkbox" name="perms[]" value="' . h($k) . '"' . (in_array($k, $have, true) ? ' checked' : '') . '>' . h($l) . '</label>'; $o .= '</div><div class="row" style="margin-top:10px"><span class="muted">Presets:</span>'; foreach (PERM_PRESETS as $pk => $p) $o .= '<button type="button" class="btn sm ghost" data-preset="' . h(implode(',', $p['perms'])) . '">' . h($p['label']) . '</button>'; return $o . '</div>'; }
 page_head('Admins', $admin);
 ?>
 <h1>Admins</h1><p class="muted">Only super admins can see this page. New admins get a one-time temporary password and must choose their own at first sign-in.</p>
@@ -51,20 +57,22 @@ page_head('Admins', $admin);
 <?php foreach ($list as $a): ?><tr>
   <td><b><?= h($a['full_name']) ?></b><br><span class="muted"><?= h($a['email']) ?><?= $a['phone'] ? ' &middot; ' . h($a['phone']) : '' ?><?= $a['job_title'] ? '<br>' . h($a['job_title']) : '' ?></span></td>
   <td class="mono"><?= h($a['username']) ?></td>
-  <td><form method="post" style="display:flex;gap:6px"><?= csrf_field() ?><input type="hidden" name="action" value="role"><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><select name="role" onchange="this.form.submit()"><option value="admin"<?= $a['role'] === 'admin' ? ' selected' : '' ?>>Admin</option><option value="super_admin"<?= $a['role'] === 'super_admin' ? ' selected' : '' ?>>Super admin</option></select></form></td>
+  <td><form method="post" style="display:flex;gap:6px"><?= csrf_field() ?><input type="hidden" name="action" value="role"><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><select name="role" data-autosubmit><option value="admin"<?= $a['role'] === 'admin' ? ' selected' : '' ?>>Admin</option><option value="super_admin"<?= $a['role'] === 'super_admin' ? ' selected' : '' ?>>Super admin</option></select></form></td>
   <td><span class="pill <?= (int) $a['is_active'] ? 'good' : 'bad' ?>"><?= (int) $a['is_active'] ? 'Active' : 'Disabled' ?></span><?= $a['locked_until'] && $a['locked_until'] > now() ? ' <span class="pill bad">Locked</span>' : '' ?><?= (int) $a['must_change_pw'] ? '<br><small class="muted">must set a new password</small>' : '' ?></td>
   <td><?= $a['last_login_at'] ? h(eat($a['last_login_at'])) . '<br><small class="muted">' . h($a['last_login_ip']) . '</small>' : '<span class="muted">Never</span>' ?></td>
   <td><?= h($a['creator'] ?: 'Setup') ?></td>
-  <td style="white-space:nowrap"><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="reset"><button class="btn sm ghost" onclick="return confirm('Reset the password for <?= h($a['username']) ?>?')">Reset password</button></form>
+  <td style="white-space:nowrap"><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="reset"><button class="btn sm ghost" data-confirm="Reset the password for <?= h($a['username']) ?>?">Reset password</button></form>
     <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><input type="hidden" name="action" value="toggle"><button class="btn sm <?= (int) $a['is_active'] ? 'danger' : '' ?>"><?= (int) $a['is_active'] ? 'Deactivate' : 'Activate' ?></button></form></td>
-</tr><?php endforeach; ?></tbody></table></div>
+</tr>
+<tr><td colspan="7" style="background:#FAFCFF"><?php if ($a['role'] === 'super_admin'): ?><span class="muted">Super admin: every permission, always.</span><?php else: $have = perms_of($a); ?><details><summary><b>Permissions</b> <span class="muted">(<?= count($have) ?> of <?= count(PERMS) ?> granted)</span></summary><form method="post" class="stack"><?= csrf_field() ?><input type="hidden" name="action" value="perms"><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><?= perm_boxes($have) ?><button class="btn sm">Save permissions</button></form></details><?php endif; ?></td></tr><?php endforeach; ?></tbody></table></div>
 <div class="card"><h2>Add an admin</h2>
-<form method="post" class="stack" style="max-width:520px"><?= csrf_field() ?><input type="hidden" name="action" value="create">
+<form method="post" class="stack" style="max-width:760px"><?= csrf_field() ?><input type="hidden" name="action" value="create">
   <label>Full name<input name="full_name" required maxlength="120"></label>
   <label>Username<input name="username" required maxlength="40" pattern="[A-Za-z0-9._-]{3,40}" autocapitalize="none"></label>
   <label>Email<input name="email" type="email" required maxlength="190"></label>
   <label>Phone (optional)<input name="phone" maxlength="40"></label>
   <label>Job title (optional)<input name="job_title" maxlength="120"></label>
   <label>Role<select name="role"><option value="admin">Admin (works on requests)</option><option value="super_admin">Super admin (also manages admins and sees the login log)</option></select></label>
+  <div><b>Permissions</b> <span class="muted">(ignored for super admins)</span><div style="margin-top:8px"><?= perm_boxes(['doc.view']) ?></div></div>
   <button class="btn">Create admin</button></form></div>
 <?php page_foot();

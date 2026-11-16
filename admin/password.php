@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     else {
         $pdo->prepare('UPDATE admins SET password_hash = ?, must_change_pw = 0, password_changed_at = ?, updated_at = ? WHERE id = ?')->execute([make_hash($new), now(), now(), $admin['id']]);
         log_activity((int) $admin['id'], 'password_changed', $admin['username']);
-        session_regenerate_id(true); flash('Password changed.'); redirect('index.php');
+        session_regenerate_id(true); flash('Password changed.'); redirect('dashboard.php');
     }
 }
 page_head('Change password', $admin);

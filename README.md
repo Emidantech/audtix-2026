@@ -56,3 +56,20 @@ The Free tools page loads live data every time it is opened and refreshes every 
 - Recommended: deploy `supabase functions deploy forex-news --no-verify-jwt` and put its URL in `config.js` as `newsEndpoint`. Without it the page uses the public rss2json service, which has usage limits.
 - If a feed cannot be reached the page says so. It never shows old figures as current. Last good rates and headlines are kept in the visitor's browser for up to 3 days and 6 hours, and labelled as saved.
 - These feeds are called straight from the visitor's browser, so they only work on the real website. The preview page inside Claude blocks outside connections and shows the "could not be loaded" state.
+
+## Business documents module (Requisition, Quotation, Invoice, Budget, Proforma, Receipt)
+
+**Install**
+1. In phpMyAdmin, import `database/audtix.mysql.sql` first, then `database/audtix-documents.mysql.sql` (safe to re-run).
+2. Sign in as super admin → **System settings**: fill in company TIN, bank details, logo and defaults (currency, VAT, terms).
+3. **User management**: grant each user permissions (presets: sales, accountant, viewer).
+
+**Permissions**: doc.view, doc.create, doc.edit, doc.post, doc.print, doc.cancel, doc.edit_posted (elevated, never for receipts), report.view, customer.manage, product.manage. Super admin has all.
+
+**Rules**
+- Flow: Requisition → Quotation → Invoice / Proforma → Receipt. Budgets are independent. Conversion needs a posted source and carries customer and lines forward.
+- Numbers (`INV-2026-00001`) come from a locked counter, so they are never duplicated.
+- Draft → Posted → Cancelled. Documents are never deleted. Posted documents are locked; only users with the elevated permission (receipts: super admin only) can edit, with a reason, and revisions are kept.
+- Receipts can only be voided, with a reason; user and time are recorded. A receipt against an invoice cannot exceed its balance.
+- All totals are recalculated on the server. Everything is written to the audit trail.
+- Reports: filter by period, customer, type, reference, status and creator; export PDF and Excel.

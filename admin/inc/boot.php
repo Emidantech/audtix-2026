@@ -80,18 +80,37 @@ function temp_password(): string {
 
 const STATUSES = ['new' => 'New', 'in_review' => 'In review', 'awaiting_client' => 'Waiting for client', 'quoted' => 'Quoted', 'in_progress' => 'In progress', 'completed' => 'Completed', 'closed' => 'Closed', 'spam' => 'Spam'];
 
+function nav_items(array $admin): array {
+    require_once __DIR__ . '/docs.php';
+    $n = [['Dashboard', 'dashboard.php', 'dashboard.php', '']];
+    if (can('doc.view', $admin)) { $docs = []; foreach (DOC_TYPES as $k => $t) $docs[] = [$t['plural'], 'docs.php?type=' . $k, 'docs.php', $k]; $n[] = ['Documents', $docs]; }
+    if (can('doc.view', $admin) || can('customer.manage', $admin)) $n[] = ['Customers', 'customers.php', 'customers.php', ''];
+    if (can('doc.view', $admin) || can('product.manage', $admin)) $n[] = ['Products & Services', 'items.php', 'items.php', ''];
+    if (can('report.view', $admin)) $n[] = ['Reports', 'reports.php', 'reports.php', ''];
+    $n[] = ['Website requests', 'index.php', 'index.php', ''];
+    if ($admin['role'] === 'super_admin') { $n[] = ['User management', 'admins.php', 'admins.php', '']; $n[] = ['Login log', 'log.php', 'log.php', '']; $n[] = ['System settings', 'settings.php', 'settings.php', '']; }
+    $n[] = ['My password', 'password.php', 'password.php', ''];
+    return $n;
+}
 function page_head(string $title, ?array $admin = null): void {
     $f = flash();
-    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . h($title) . ' | Audtix Admin</title><link rel="stylesheet" href="admin.css"></head><body>';
+    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . h($title) . ' | Audtix Admin</title><link rel="stylesheet" href="admin.css"></head><body' . ($admin ? ' class="app"' : '') . '>';
     if ($admin) {
-        $cur = basename($_SERVER['SCRIPT_NAME']);
-        $nav = ['index.php' => 'Requests', 'password.php' => 'My password'];
-        if ($admin['role'] === 'super_admin') { $nav['admins.php'] = 'Admins'; $nav['log.php'] = 'Login log'; }
-        echo '<header class="top"><a class="brand" href="index.php"><span class="dot"></span>Audtix <b>Admin</b></a><nav>';
-        foreach ($nav as $u => $l) echo '<a href="' . $u . '"' . ($cur === $u || ($u === 'index.php' && $cur === 'request.php') ? ' class="on"' : '') . '>' . h($l) . '</a>';
-        echo '</nav><form method="post" action="logout.php" class="out">' . csrf_field() . '<span class="who">' . h($admin['full_name']) . ' <em>' . ($admin['role'] === 'super_admin' ? 'Super admin' : 'Admin') . '</em></span><button class="btn sm ghost">Sign out</button></form></header>';
+        $cur = basename($_SERVER['SCRIPT_NAME']); $ct = (string) ($_GET['type'] ?? '');
+        if ($cur === 'doc.php' || $cur === 'doc_edit.php') { $ct = (string) ($GLOBALS['nav_type'] ?? $ct); $cur = 'docs.php'; }
+        echo '<header class="mbar"><button type="button" class="burger" data-menu aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button><a class="brand" href="dashboard.php"><span class="dot"></span>Audtix <b>Admin</b></a></header>';
+        echo '<aside class="side" id="side"><a class="brand" href="dashboard.php"><span class="dot"></span>Audtix <b>Admin</b></a><nav>';
+        foreach (nav_items($admin) as $it) {
+            if (is_array($it[1])) {
+                $open = $cur === 'docs.php';
+                echo '<div class="grp' . ($open ? ' open' : '') . '"><button type="button" class="gh" data-grp aria-expanded="' . ($open ? 'true' : 'false') . '">' . h($it[0]) . '<i></i></button><div class="gl">';
+                foreach ($it[1] as $s) echo '<a href="' . h($s[1]) . '"' . ($cur === 'docs.php' && $ct === $s[3] ? ' class="on"' : '') . '>' . h($s[0]) . '</a>';
+                echo '</div></div>';
+            } else echo '<a href="' . h($it[1]) . '"' . ($cur === $it[2] ? ' class="on"' : '') . '>' . h($it[0]) . '</a>';
+        }
+        echo '</nav><form method="post" action="logout.php" class="out">' . csrf_field() . '<span class="who">' . h($admin['full_name']) . '<em>' . ($admin['role'] === 'super_admin' ? 'Super admin' : 'Admin') . '</em></span><button class="btn sm ghost">Sign out</button></form></aside><div class="scrim" data-menu></div>';
     }
     echo '<main class="wrap">';
     if ($f) echo '<div class="flash ' . h($f[0]) . '" role="status">' . h($f[1]) . '</div>';
 }
-function page_foot(): void { echo '</main></body></html>'; }
+function page_foot(): void { echo '</main><script src="admin.js"></script></body></html>'; }
