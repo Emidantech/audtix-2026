@@ -126,6 +126,19 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         echo nav_tree('inbox', 'Tax and audit', $sec === 'requests', $kids, $c['r_new'] ? '<span class="nav-badge badge text-bg-warning me-3">' . $c['r_new'] . '</span>' : '');
     }
 
+    if (can('documents.view') || can('customers.view') || can('items.view') || can('doc_reports.view')) {
+        echo '<li class="nav-header">BUSINESS DOCUMENTS</li>';
+        if (can('documents.view')) {
+            echo nav_link('doc-dashboard.php', 'graph-up', 'Documents overview', $active === 'docs:overview');
+            $kids = nav_link('docs.php', 'collection', 'All documents', $active === 'docs:all');
+            foreach (DOC_TYPES as $k => $t) $kids .= nav_link('docs.php?type=' . $k, DOC_ICONS[$k], $t['plural'], $active === 'docs:' . $k);
+            echo nav_tree('files', 'Documents', $sec === 'docs' && $sub !== 'overview', $kids);
+        }
+        if (can('customers.view')) echo nav_link('customers.php', 'building', 'Customers', $sec === 'customers');
+        if (can('items.view')) echo nav_link('items.php', 'box-seam', 'Products and services', $sec === 'items');
+        if (can('doc_reports.view')) echo nav_link('reports.php', 'bar-chart-line', 'Document reports', $sec === 'doc_reports');
+    }
+
     if (can('posts.view') || can('post_types.view') || can('media.view')) {
         echo '<li class="nav-header">MEDIA</li>';
         if (can('posts.view')) {
@@ -138,9 +151,10 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         if (can('media.view')) echo nav_link('media.php', 'images', 'Image library', $sec === 'media');
     }
 
-    if (can('settings.view') || can('mail.view') || can('roles.view') || can('admins.view') || can('log.view')) {
+    if (can('settings.view') || can('mail.view') || can('roles.view') || can('admins.view') || can('log.view') || can('doc_settings.edit')) {
         echo '<li class="nav-header">ADMINISTRATION</li>';
         if (can('settings.view') || can('mail.view') || can('roles.view') || can('admins.view')) echo nav_link('settings.php', 'sliders', 'Business settings', in_array($sec, ['settings', 'branding', 'mail', 'roles', 'admins'], true));
+        if (can('doc_settings.edit')) echo nav_link('doc-settings.php', 'file-earmark-ruled', 'Document settings', $sec === 'doc_settings');
         if (can('admins.view')) echo nav_link('admins.php', 'people', 'Admin users', $sec === 'admins');
         if (can('roles.view')) echo nav_link('roles.php', 'shield-check', 'Roles and permissions', $sec === 'roles');
         if (can('log.view')) echo nav_link('log.php', 'shield-lock', 'Login log', $sec === 'log');
@@ -169,6 +183,13 @@ function page_foot(bool $auth = false): void {
     else echo '</div></div></main><footer class="app-footer"><div class="float-end d-none d-sm-inline">Times are East Africa Time</div><strong>&copy; ' . gmdate('Y') . ' <a href="../index.html" class="text-decoration-none">Audtix Systems</a>.</strong> Admin panel.</footer></div>';
     echo '<script src="' . $assets . '/bootstrap/js/bootstrap.bundle.min.js?v=' . asset_v() . '"></script><script src="' . $assets . '/adminlte/js/adminlte.min.js?v=' . asset_v() . '"></script><script src="admin.js?v=' . asset_v() . '"></script></body></html>';
 }
+
+/* Pages of the business-documents module: same layout, plus the module's own stylesheet and script. */
+function dm_head(string $title, array $admin, string $active, array $crumbs = [], string $actions = ''): void {
+    page_head($title, $admin, $active, $crumbs, $actions);
+    echo '<link rel="stylesheet" href="documents.css?v=' . asset_v() . '"><div class="dm">';
+}
+function dm_foot(): void { echo '</div><script src="doc-ui.js?v=' . asset_v() . '"></script>'; page_foot(); }
 
 function pager(int $page, int $pages, int $total, callable $url, string $noun = 'item'): string {
     $o = '<div class="d-flex flex-wrap align-items-center justify-content-between gap-2"><span class="text-secondary small">' . number_format($total) . ' ' . $noun . ($total === 1 ? '' : 's') . ' &middot; page ' . $page . ' of ' . $pages . '</span><ul class="pagination pagination-sm m-0">';
