@@ -52,6 +52,13 @@
   }
   if (inv) { inv.addEventListener("change", function () { onInv(true); }); }
 
+  /* ---- invoices: due date is always 30 days after the invoice date ---- */
+  var dd = $("#doc_date"), du = $("#due_date");
+  if (dd && du && data.type === "invoice") {
+    var setDue = function () { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dd.value); if (!m) return; var t = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 30)); du.value = t.toISOString().slice(0, 10); };
+    dd.addEventListener("change", setDue); dd.addEventListener("input", setDue); setDue();
+  }
+
   /* ---- lines ---- */
   var box = $("#lines"), idx = 0;
   function num(v) { v = String(v == null ? "" : v).replace(/,/g, "").trim(); return v === "" ? 0 : parseFloat(v); }

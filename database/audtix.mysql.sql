@@ -536,8 +536,8 @@ INSERT IGNORE INTO app_settings (skey, svalue, updated_at) VALUES
   ('default_currency','UGX', UTC_TIMESTAMP()),
   ('default_vat',     '18', UTC_TIMESTAMP()),
   ('quote_valid_days','30', UTC_TIMESTAMP()),
-  ('invoice_due_days','14', UTC_TIMESTAMP()),
-  ('terms_default',   'Payment is due by the date shown. Prices are in the currency shown and exclude any tax not listed. Goods remain the property of Audtix Systems Ltd until paid in full.', UTC_TIMESTAMP());
+  ('invoice_due_days','30', UTC_TIMESTAMP()),
+  ('terms_default',   'Kindly pay by the due date shown. Prices exclude any tax not listed. Goods remain the property of Audtix Systems Ltd until paid in full. Thank you for your business.', UTC_TIMESTAMP());
 
 -- Per-type permissions (16 Nov 2026): roles that held the earlier combined "documents.*" permissions
 -- keep the same access on every document type; the old keys are then removed. Safe to re-run.
