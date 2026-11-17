@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__, 2) . '/api/lib/common.php';
 require dirname(__DIR__, 2) . '/api/lib/quotes.php';
+require dirname(__DIR__, 2) . '/api/lib/rfq.php';
 
 const IDLE_SECONDS = 3600;
 const MAX_FAILS = 5;
@@ -56,7 +57,11 @@ function me(): ?array {
 }
 function require_login(bool $allowPwChange = false): array {
     $a = me();
-    if (!$a) redirect('login.php');
+    if (!$a) {   // remember where they were going (links in emails), only plain admin pages
+        $u = basename((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH)) . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && preg_match('/^[a-z0-9_-]+\.php(\?[A-Za-z0-9=&_%.-]*)?$/', $u) && !str_starts_with($u, 'login.php')) $_SESSION['login_next'] = $u;
+        redirect('login.php');
+    }
     if ((int) $a['must_change_pw'] && !$allowPwChange) redirect('password.php');
     check_csrf();
     return $a;

@@ -7,6 +7,7 @@ declare(strict_types=1);
  */
 require __DIR__ . '/lib/common.php';
 require __DIR__ . '/lib/customers.php';
+require __DIR__ . '/lib/rfq.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -147,11 +148,11 @@ foreach ($rows as $r) {
 }
 $dbLine = $dbOk ? 'Saved to the database: yes' : 'Saved to the database: NO (database problem, this email is the record)';
 $subject = "[$tag] New request $requestId: $clientName";
-$text = "New " . ($category === 'tax' ? 'tax' : 'audit') . " service request\nRequest ID: $requestId\nCategory: $tag\nReceived (UTC): " . now() . "\n$dbLine\nDocuments: " . count($stored) . "\n\n$tx";
+$text = "New " . ($category === 'tax' ? 'tax' : 'audit') . " service request\nRequest ID: $requestId\nCategory: $tag\nReceived (UTC): " . now() . "\n$dbLine\nDocuments: " . count($stored) . "\n" . rfq_email_button_text('request', $pk) . "\n$tx";
 $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#10202f"><h2 style="margin:0 0 6px">New ' . ($category === 'tax' ? 'tax' : 'audit') . ' service request</h2>'
       . '<p style="margin:0 0 12px"><b style="font-family:monospace;font-size:16px;background:#eaf2fc;padding:3px 8px;border-radius:5px">' . h($requestId) . '</b> &nbsp; <span style="background:#10202f;color:#fff;padding:3px 8px;border-radius:5px;font-size:12px">' . h($tag) . '</span></p>'
       . '<p style="margin:0 0 12px;color:#5a6b7d">Received (UTC): ' . h(now()) . ' &middot; ' . h($dbLine) . ' &middot; Documents attached: ' . count($stored) . '</p>'
-      . '<table style="border-collapse:collapse;width:100%;max-width:760px">' . $tr . '</table></div>';
+      . rfq_email_button('request', $pk) . '<table style="border-collapse:collapse;width:100%;max-width:760px;margin-top:14px">' . $tr . '</table></div>';
 $att = []; $sum = 0;
 foreach ($stored as $f) { if ($sum + $f['size'] > 14 * 1048576) continue; $sum += $f['size']; $att[] = ['name' => $f['key'] === '' ? $f['orig'] : substr($f['key'], 6) . '_' . $f['orig'], 'mime' => $f['mime'], 'path' => $f['path']]; }
 // The team email can be turned off in Admin > Business settings, but only when the database copy exists.

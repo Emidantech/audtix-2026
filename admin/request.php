@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
+require_once __DIR__ . '/inc/rfq.php';
 $admin = require_login();
 require_perm('requests.view');
 $pdo = db();
@@ -75,6 +76,7 @@ function fsize(int $n): string { return $n >= 1048576 ? round($n / 1048576, 1) .
       <?php if ($r['contact_person']): ?><div><dt>Contact</dt><dd><?= h($r['contact_person']) ?></dd></div><?php endif; ?>
       <div><dt>Email</dt><dd><a href="mailto:<?= h($r['email']) ?>"><?= h($r['email']) ?></a></dd></div>
       <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $r['phone'])) ?>"><?= h($r['phone']) ?></a> &middot; <a href="https://wa.me/<?= h(preg_replace('/\D/', '', $r['phone'])) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div></dl></div></div>
+    <div class="card card-outline card-warning"><div class="card-header"><h3 class="card-title"><i class="bi bi-lightning-charge"></i> Turn into a document</h3></div><div class="card-body"><?= rfq_buttons($admin, 'request', $id) ?></div></div>
     <?php if (can('requests.edit')): ?>
     <div class="card"><div class="card-header"><h3 class="card-title">Status and assignment</h3></div><div class="card-body">
       <form method="post" class="d-flex gap-2 mb-3"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="action" value="status">

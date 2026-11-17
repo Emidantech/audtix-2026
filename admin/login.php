@@ -17,11 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($a && $a['locked_until'] && $a['locked_until'] > now()) { log_login((int) $a['id'], $u, false, 'locked'); $error = 'This account is locked for a few minutes after too many wrong passwords.'; }
             elseif ($a && $ok && (int) $a['is_active']) {
                 session_regenerate_id(true);
+                $next = (string) ($_SESSION['login_next'] ?? '');
                 $_SESSION = ['admin_id' => (int) $a['id'], 'seen' => time(), 'csrf' => bin2hex(random_bytes(24))];
                 $pdo->prepare('UPDATE admins SET failed_attempts = 0, locked_until = NULL, last_login_at = ?, last_login_ip = ?, updated_at = ? WHERE id = ?')->execute([now(), $ip, now(), $a['id']]);
                 if (password_needs_rehash($a['password_hash'], PASSWORD_DEFAULT)) $pdo->prepare('UPDATE admins SET password_hash = ? WHERE id = ?')->execute([make_hash($p), $a['id']]);
                 log_login((int) $a['id'], $u, true, 'ok');
-                redirect('index.php');
+                redirect(preg_match('/^[a-z0-9_-]+\.php(\?[A-Za-z0-9=&_%.-]*)?$/', $next) ? $next : 'index.php');
             } else {
                 if ($a && $ok && !(int) $a['is_active']) { log_login((int) $a['id'], $u, false, 'disabled'); }
                 elseif ($a) {
