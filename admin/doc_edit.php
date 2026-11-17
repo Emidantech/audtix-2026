@@ -46,8 +46,13 @@ $v = fn($k) => h((string) ($in[$k] ?? '')); $e = fn($k) => isset($errors[$k]) ? 
 $isPosted = $existing && $existing['status'] === 'posted';
 dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:' . $type);
 ?>
-<p><a href="<?= $existing ? 'doc.php?id=' . $id : 'docs.php?type=' . h($type) ?>">&larr; Back</a></p>
-<h1><?= $existing ? 'Edit ' . h($T['label']) . ' ' . h($existing['doc_no']) : 'New ' . h(strtolower($T['label'])) ?></h1>
+<?php $backUrl = $existing ? 'doc.php?id=' . $id : 'docs.php?type=' . h($type); ?>
+<div class="hdr doc-bar"><a class="noprint" href="<?= $backUrl ?>">&larr; Back</a>
+  <span class="spacer"></span>
+  <div class="doc-actions noprint"><button class="btn sm" form="docform" name="action" value="save"><?= $isPosted ? 'Save changes' : 'Save as draft' ?></button>
+    <button class="btn sm ghost" form="docform" name="action" value="preview" formaction="doc_preview.php" formtarget="_blank">Preview</button>
+    <?php if (!$isPosted && dcan('doc.post', $admin, $type)): ?><button class="btn sm green" form="docform" name="action" value="post" data-confirm="Save and post this <?= h(strtolower($T['label'])) ?>? Once posted it is locked.">Save and post</button><?php endif; ?>
+    <a class="btn sm ghost" href="<?= $backUrl ?>">Cancel</a></div></div>
 <?php if (!empty($errors['form'])): ?><div class="flash bad" role="alert"><?= h($errors['form']) ?></div><?php endif; ?>
 <?php if ($isPosted): ?><div class="flash bad">This document is <b>posted</b>. Changes are recorded in its history with your reason, and the earlier version is kept.</div><?php endif; ?>
 <script type="application/json" id="doc-data"><?= str_replace('<', '<', json_encode($boot, JSON_UNESCAPED_UNICODE | JSON_HEX_AMP)) ?></script>
@@ -84,10 +89,6 @@ dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:
 <?php endif; ?>
 <div class="card"><h2>Notes and terms</h2><div class="cols2"><label>Notes (shown on the document)<textarea name="notes" maxlength="2000"><?= $v('notes') ?></textarea></label><label>Terms and conditions<textarea name="terms" maxlength="4000" style="min-height:130px"><?= $v('terms') ?></textarea></label></div></div>
 <?php if ($isPosted): ?><div class="card"><label>Reason for changing this posted document *<input name="edit_reason" maxlength="400" value="<?= $v('edit_reason') ?>" required><?= $e('edit_reason') ?></label></div><?php endif; ?>
-<div class="card row noprint"><button class="btn" name="action" value="save">Save <?= $isPosted ? 'changes' : 'as draft' ?></button>
-  <button class="btn ghost" name="action" value="preview" formaction="doc_preview.php" formtarget="_blank">Preview</button>
-  <?php if (!$isPosted && dcan('doc.post', $admin, $type)): ?><button class="btn green" name="action" value="post" data-confirm="Save and post this <?= h(strtolower($T['label'])) ?>? Once posted it is locked.">Save and post</button><?php endif; ?>
-  <a class="btn ghost" href="<?= $existing ? 'doc.php?id=' . $id : 'docs.php?type=' . h($type) ?>">Cancel</a></div>
 </form>
 <script src="doc-editor.js"></script>
 <?php dm_foot();

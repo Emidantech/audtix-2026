@@ -111,3 +111,9 @@
 .dm .row>*{width:auto;max-width:none;margin:0;flex-shrink:1}.dm .row>*:not(.btn){padding:0}
 .dm .btn{display:inline-block;line-height:1.2}
 .dm form{margin:0}
+
+/* editor action bar: one small row at the top right */
+.dm .doc-bar{align-items:center;gap:10px}
+.dm .doc-actions{display:flex;flex-wrap:nowrap;gap:6px;justify-content:flex-end}
+.dm .doc-actions .btn{padding:5px 11px;font-size:12.5px;min-height:0;line-height:1.3;white-space:nowrap}
+@media(max-width:520px){.dm .doc-actions{flex-wrap:wrap}}

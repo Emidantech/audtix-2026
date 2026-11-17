@@ -6,6 +6,7 @@ declare(strict_types=1);
  * if one fails the other still happens. A copy of the data is also kept on disk as a third safety net.
  */
 require __DIR__ . '/lib/common.php';
+require __DIR__ . '/lib/customers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -133,6 +134,7 @@ if ($pdo) {
         $pdo->commit(); $dbOk = true;
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); $dbErr = $e->getMessage(); $dbOk = false; }
 }
+if ($dbOk) capture_customer($pdo, ['name' => $clientName, 'contact_person' => s($data['contact_person'] ?? '', 190), 'tin' => $tin, 'address' => s($data['location'] ?? '', 500), 'phone' => $phone, 'email' => $email, 'note' => 'Registered automatically from request ' . $requestId . '.']);
 if ($dbOk) notify_admins($pdo, $category . '_request', 'requests', 'New ' . ($category === 'tax' ? 'tax' : 'audit') . ' request ' . $requestId, $clientName . ($svcRow ? ' · ' . $svcRow : ''), 'request.php?id=' . $pk);
 
 /* ---------- 2) email a copy (independent of the database) ---------- */
