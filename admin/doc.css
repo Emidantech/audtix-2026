@@ -15,4 +15,30 @@
 .sheet .sigs{display:flex;gap:28px;margin-top:54px;flex-wrap:wrap}.sheet .sigs>div{flex:1;min-width:150px;display:grid;gap:1px;font-size:12px}.sheet .sigs .sl{border-top:1px solid #10202F;margin-bottom:5px}.sheet .sigs i{color:#5A6B7D;font-size:10.5px}.sheet .sigs em{font-style:normal}
 .sheet .foot{margin-top:34px;padding-top:9px;border-top:1px solid #DCE6F2;color:#5A6B7D;font-size:11px;text-align:center}
 @media(max-width:640px){.sheet{padding:22px 16px}.sheet .meta{min-width:0;width:100%}}
-@media print{@page{size:A4;margin:12mm}.sheet{border:0;box-shadow:none;max-width:none;padding:0}.sheet .tw{overflow:visible}}
+/* Printing: same look as the downloaded PDF (Helvetica, white page, plain notes, footer at the bottom). */
+@media print{
+@page{size:A4;margin:14mm 14mm 16mm;@bottom-right{content:"Page " counter(page) " of " counter(pages);font:8pt Helvetica,Arial,sans-serif;color:#5A6B7D}}
+html,body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet{border:0;box-shadow:none;border-radius:0;max-width:none;margin:0;padding:0;overflow:visible;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;font-size:10pt;line-height:1.4;min-height:262mm;display:flex;flex-direction:column}
+.sheet .wm{position:absolute;top:42%;font-size:110pt;color:#ECF0F5;z-index:0}
+.sheet .wm.bad{font-size:84pt;color:#FAE2E0}
+.sheet>*:not(.wm){position:relative;z-index:1}
+.sheet .co b{font-size:11pt}.sheet .co span{font-size:8.5pt}.sheet .co .colo{max-width:130px;max-height:50px}
+.sheet .meta{min-width:215px}.sheet .meta h1{font-size:19pt;letter-spacing:0}.sheet .meta dl{font-size:9pt;gap:2px 12px}
+.sheet .bill{margin:20px 0 16px}.sheet .bill b{font-size:12.5pt}.sheet .bill small{font-size:8.5pt}.sheet .bill>div{font-size:9pt}
+.sheet .lines th{font-size:8.5pt}.sheet .lines td{font-size:9pt;padding:6px 7px}
+.sheet .cancelled{background:none;color:inherit;padding:0;border-radius:0;font-weight:400;font-size:8.5pt}
+.sheet .blk{font-size:8.5pt}.sheet .blk small{font-weight:700;font-size:8.5pt}
+.sheet .sigs{margin-top:44px;gap:24px;break-inside:avoid}
+.sheet .foot{margin-top:auto;padding-top:8px;text-align:left;font-size:8pt;break-inside:avoid}
+.sheet .tw{overflow:visible}
+.sheet .lines th{text-transform:none;letter-spacing:0;font-weight:700}
+.sheet .lines td,.sheet .lines th{border-left:0;border-right:0}
+.sheet .tot table{min-width:250px;margin:0}.sheet .tot td{padding:3px 8px;border:0;font-size:9.5pt;background:none}.sheet .tot tr.b td{border-top:.8pt solid #10202F;font-size:10.5pt}
+.sheet .meta dt:after{content:":"}
+.dm,.app-wrapper,.app-main,.app-content,.container-fluid,.content-wrapper,main{background:#fff!important;padding:0!important;margin:0!important;box-shadow:none!important}
+.sheet .tot .r{text-align:right}
+.sheet table,.sheet td,.sheet tr,.sheet tbody{background-color:transparent!important;--bs-table-bg:transparent;--bs-table-accent-bg:transparent}
+.sheet .lines th{background-color:#F1F5FA!important}
+.sheet .meta h1{font-weight:800}
+}
