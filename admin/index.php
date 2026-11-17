@@ -19,6 +19,13 @@ $reqs = $pdo->query("SELECT id, request_id, category, client_name, created_at FR
 $box = fn($n, $l, $col, $i, $href) => '<div class="col-6 col-xl-3"><div class="small-box text-bg-' . $col . '"><div class="inner"><h3>' . $n . '</h3><p>' . $l . '</p></div><i class="small-box-icon bi bi-' . $i . '"></i><a href="' . $href . '" class="small-box-footer link-light link-underline-opacity-0">Open <i class="bi bi-arrow-right-short"></i></a></div></div>';
 page_head('Dashboard', $admin, 'dashboard', [['Dashboard', null]]);
 ?>
+<?php $qa = array_values(array_filter(array_keys(DOC_TYPES), fn($k) => dcan('doc.create', $admin, $k)));
+if ($qa): $dcount = $c['docs']; ?>
+<div class="qa-grid" aria-label="Create a business document">
+  <?php foreach ($qa as $k): ?><a class="qa-tile" href="doc_edit.php?type=<?= h($k) ?>"><span class="qa-ico"><i class="bi bi-<?= h(DOC_ICONS[$k]) ?>"></i></span><span class="qa-name"><?= h(DOC_TYPES[$k]['label']) ?></span><span class="qa-sub">New &middot; <?= (int) ($dcount[$k] ?? 0) ?> total</span></a>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
 <?php if (!$cq && !$cr): ?><div class="callout callout-info"><h5>Welcome, <?= h($admin['full_name']) ?></h5><p class="mb-0">Use the menu on the left. Your role is <b><?= h(role_name($admin)) ?></b>.</p></div><?php endif; ?>
 <?php if ($cq || $cr): ?><div class="row g-3 mb-1">
   <?php if ($cq): ?><?= $box($c['q']['pending'], 'Quotations pending', 'warning', 'hourglass-split', 'quotes.php?status=pending') ?>
@@ -28,10 +35,10 @@ page_head('Dashboard', $admin, 'dashboard', [['Dashboard', null]]);
 </div><?php endif; ?>
 <?php if ($cq): ?>
 <div class="row g-3 mb-3">
-  <div class="col-sm-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-primary shadow-sm"><i class="bi bi-calendar3"></i></span><div class="info-box-content"><span class="info-box-text">Quotation requests this month</span><span class="info-box-number"><?= (int) $mo['n'] ?></span></div></div></div>
-  <div class="col-sm-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-success shadow-sm"><i class="bi bi-hand-thumbs-up"></i></span><div class="info-box-content"><span class="info-box-text">Won this month</span><span class="info-box-number"><?= (int) $mo['won'] ?> <small class="fw-normal text-secondary"><?= $mo['won_ugx'] ? h(money((string) $mo['won_ugx'], 'UGX')) : '' ?></small></span></div></div></div>
-  <div class="col-sm-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-info shadow-sm"><i class="bi bi-send"></i></span><div class="info-box-content"><span class="info-box-text">Quotations sent (all time)</span><span class="info-box-number"><?= $responded ?></span></div></div></div>
-  <div class="col-sm-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-secondary shadow-sm"><i class="bi bi-percent"></i></span><div class="info-box-content"><span class="info-box-text">Win rate (decided quotes)</span><span class="info-box-number"><?= $decided ? round($won / $decided * 100) . '%' : '–' ?></span>
+  <div class="col-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-primary shadow-sm"><i class="bi bi-calendar3"></i></span><div class="info-box-content"><span class="info-box-text">Quotation requests this month</span><span class="info-box-number"><?= (int) $mo['n'] ?></span></div></div></div>
+  <div class="col-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-success shadow-sm"><i class="bi bi-hand-thumbs-up"></i></span><div class="info-box-content"><span class="info-box-text">Won this month</span><span class="info-box-number"><?= (int) $mo['won'] ?> <small class="fw-normal text-secondary"><?= $mo['won_ugx'] ? h(money((string) $mo['won_ugx'], 'UGX')) : '' ?></small></span></div></div></div>
+  <div class="col-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-info shadow-sm"><i class="bi bi-send"></i></span><div class="info-box-content"><span class="info-box-text">Quotations sent (all time)</span><span class="info-box-number"><?= $responded ?></span></div></div></div>
+  <div class="col-6 col-xl-3"><div class="info-box"><span class="info-box-icon text-bg-secondary shadow-sm"><i class="bi bi-percent"></i></span><div class="info-box-content"><span class="info-box-text">Win rate (decided quotes)</span><span class="info-box-number"><?= $decided ? round($won / $decided * 100) . '%' : '–' ?></span>
     <div class="progress"><div class="progress-bar" style="width:<?= $decided ? round($won / $decided * 100) : 0 ?>%"></div></div></div></div></div>
 </div>
 <?php endif; ?>

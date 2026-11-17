@@ -5,7 +5,7 @@ require_once __DIR__ . '/inc/docs.php';
 require_once __DIR__ . '/inc/render.php';
 $admin = require_login(); $pdo = db();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') redirect('dashboard.php');
-$type = (string) ($_POST['type'] ?? ''); if (!isset(DOC_TYPES[$type]) || !(dcan('doc.create', $admin) || dcan('doc.edit', $admin))) { http_response_code(403); exit('Not allowed.'); }
+$type = (string) ($_POST['type'] ?? ''); if (!isset(DOC_TYPES[$type]) || !(dcan('doc.create', $admin, $type) || dcan('doc.edit', $admin, $type))) { http_response_code(403); exit('Not allowed.'); }
 $GLOBALS['nav_type'] = $type;
 $s = $pdo->prepare('SELECT * FROM customers WHERE id = ?'); $s->execute([(int) ($_POST['customer_id'] ?? 0)]); $c = $s->fetch();
 if ($type === 'receipt') {

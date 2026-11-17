@@ -8,16 +8,16 @@ const DOC_TYPES = [
     'quotation'   => ['label' => 'Quotation',        'plural' => 'Quotations',        'prefix' => 'QUO', 'title' => 'QUOTATION',        'due' => 'Valid until',       'bill' => 'Quotation for'],
     'invoice'     => ['label' => 'Invoice',          'plural' => 'Invoices',          'prefix' => 'INV', 'title' => 'INVOICE',          'due' => 'Due date',          'bill' => 'Bill to'],
     'budget'      => ['label' => 'Budget',           'plural' => 'Budgets',           'prefix' => 'BUD', 'title' => 'BUDGET',           'due' => 'Period ends',       'bill' => 'Budget for'],
-    'proforma'    => ['label' => 'Proforma Invoice', 'plural' => 'Proforma Invoices', 'prefix' => 'PRF', 'title' => 'PROFORMA INVOICE', 'due' => 'Valid until',       'bill' => 'Bill to'],
+    'proforma'    => ['label' => 'Proforma Invoice', 'plural' => 'Proforma Invoices', 'nav' => 'Proforma invoices', 'prefix' => 'PRF', 'title' => 'PROFORMA INVOICE', 'due' => 'Valid until',       'bill' => 'Bill to'],
     'receipt'     => ['label' => 'Receipt',          'plural' => 'Receipts',          'prefix' => 'RCT', 'title' => 'RECEIPT',          'due' => '',                  'bill' => 'Received from'],
 ];
 const CURRENCIES = ['UGX' => ['Uganda Shillings', 'Cents'], 'USD' => ['US Dollars', 'Cents'], 'EUR' => ['Euros', 'Cents'], 'GBP' => ['Pounds Sterling', 'Pence'], 'KES' => ['Kenya Shillings', 'Cents']];
 const CONVERSIONS = ['requisition' => ['quotation'], 'quotation' => ['invoice', 'proforma'], 'proforma' => ['invoice'], 'invoice' => ['receipt'], 'budget' => [], 'receipt' => []];
-/* Document permissions live in the panel's own roles system (admin/inc/perms.php, "documents.*", "customers.*",
-   "items.*", "doc_reports.view", "doc_settings.edit"). The keys used in this module map onto them here. */
+/* Document permissions live in the panel's own roles system (admin/inc/perms.php): one module per document type
+   ("doc_invoice.view", "doc_receipt.cancel" ...), plus "customers.*", "items.*", "doc_reports.view", "doc_settings.edit".
+   dcan('doc.post', $admin, 'invoice') asks about one type; without a type it asks "on any type". */
+const DOC_ACTIONS = ['doc.view' => 'view', 'doc.create' => 'add', 'doc.edit' => 'edit', 'doc.post' => 'post', 'doc.print' => 'print', 'doc.cancel' => 'cancel', 'doc.edit_posted' => 'edit_posted'];
 const DOC_PERM_MAP = [
-    'doc.view' => 'documents.view', 'doc.create' => 'documents.add', 'doc.edit' => 'documents.edit', 'doc.post' => 'documents.post',
-    'doc.print' => 'documents.print', 'doc.cancel' => 'documents.cancel', 'doc.edit_posted' => 'documents.edit_posted',
     'report.view' => 'doc_reports.view', 'customer.view' => 'customers.view', 'customer.add' => 'customers.add', 'customer.manage' => 'customers.edit',
     'product.view' => 'items.view', 'product.add' => 'items.add', 'product.manage' => 'items.edit',
 ];
@@ -25,9 +25,13 @@ const DOC_ICONS = ['requisition' => 'clipboard-check', 'quotation' => 'file-earm
 const MAX_LINES = 100;
 
 /* ===================== permissions ===================== */
-/** True if $admin (default: the signed-in admin) holds the document permission $p. */
-function dcan(string $p, ?array $admin = null): bool {
-    $key = DOC_PERM_MAP[$p] ?? $p;
+/** True if $admin (default: the signed-in admin) holds the permission $p (for document actions, on $type or on any type). */
+function dcan(string $p, ?array $admin = null, ?string $type = null): bool {
+    if (isset(DOC_ACTIONS[$p])) {
+        if ($type === null) { foreach (array_keys(DOC_TYPES) as $t) if (dcan($p, $admin, $t)) return true; return false; }
+        if (!isset(DOC_TYPES[$type])) return false;
+        $key = 'doc_' . $type . '.' . DOC_ACTIONS[$p];
+    } else $key = DOC_PERM_MAP[$p] ?? $p;
     $me = me();
     if ($admin === null || ($me && (int) $admin['id'] === (int) $me['id'])) return can($key);
     if (($admin['role'] ?? '') === 'super_admin') return true;
@@ -35,10 +39,17 @@ function dcan(string $p, ?array $admin = null): bool {
     $s = db()->prepare('SELECT COUNT(*) FROM role_permissions WHERE role_id = ? AND permission = ?'); $s->execute([(int) $admin['role_id'], $key]);
     return (bool) $s->fetchColumn();
 }
+/** Document types the signed-in admin holds permission $p on. */
+function doc_types_for(string $p = 'doc.view'): array { $o = []; foreach (array_keys(DOC_TYPES) as $t) if (dcan($p, null, $t)) $o[] = $t; return $o; }
+/** SQL condition limiting $col to the types the signed-in admin may view (types are fixed, safe words). */
+function doc_type_in(string $col = 'doc_type', string $p = 'doc.view'): string { $t = doc_types_for($p); return $t ? $col . " IN ('" . implode("','", $t) . "')" : '1=0'; }
 /** Signed-in admin, or the panel's "no access" page. */
-function doc_need(string $p): array {
+function doc_need(string $p, ?string $type = null): array {
     $a = require_login();
-    require_perm(DOC_PERM_MAP[$p] ?? $p);
+    if (!dcan($p, $a, $type)) {
+        require_perm(isset(DOC_ACTIONS[$p]) ? 'doc_' . ($type ?? 'invoice') . '.' . DOC_ACTIONS[$p] : (DOC_PERM_MAP[$p] ?? $p));
+        http_response_code(403); exit;
+    }
     return $a;
 }
 
@@ -198,7 +209,7 @@ function save_document(PDO $pdo, array $admin, string $type, ?int $id, array $in
         $existing = get_document($pdo, $id);
         if (!$existing || $existing['doc_type'] !== $type) return ['ok' => false, 'errors' => ['form' => 'Document not found.']];
         $why = edit_block_reason($admin, $existing); if ($why) return ['ok' => false, 'errors' => ['form' => $why]];
-    } elseif (!dcan('doc.create', $admin)) return ['ok' => false, 'errors' => ['form' => 'You may not create documents.']];
+    } elseif (!dcan('doc.create', $admin, $type)) return ['ok' => false, 'errors' => ['form' => 'You may not create this kind of document.']];
 
     $isPosted = $existing && $existing['status'] === 'posted';
     $editReason = t($in, 'edit_reason', 400);
@@ -270,7 +281,7 @@ function save_document(PDO $pdo, array $admin, string $type, ?int $id, array $in
                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
                 ->execute(array_merge([$type, $no, 'draft'], $vals, [1, $admin['id'], $admin['id'], now(), now()]));
             $docId = (int) $pdo->lastInsertId();
-            doc_event($pdo, $docId, (int) $admin['id'], 'created', 'Created ' . DOC_TYPES[$type]['label'] . ' ' . $no . ' as a draft');
+            doc_event($pdo, $docId, (int) $admin['id'], 'created', 'Created ' . DOC_TYPES[$type]['label'] . ' ' . $no . ' as a draft'); log_activity((int) $admin['id'], 'document_created', (string) $no, DOC_TYPES[$type]['label']);
         } else {
             $docId = (int) $existing['id'];
             if ($existing['status'] !== 'draft') {
@@ -280,7 +291,7 @@ function save_document(PDO $pdo, array $admin, string $type, ?int $id, array $in
             $u->execute(array_merge($vals, [$admin['id'], now(), $docId, (int) ($in['version'] ?? $existing['version']), 'cancelled']));
             if ($u->rowCount() === 0) { $pdo->rollBack(); return ['ok' => false, 'errors' => ['form' => 'Someone else changed this document while you were editing. Reload it and try again.']]; }
             $pdo->prepare('DELETE FROM document_lines WHERE document_id = ?')->execute([$docId]);
-            if ($isPosted) { doc_event($pdo, $docId, (int) $admin['id'], 'revised', 'Posted document changed. Reason: ' . $editReason . '. Total ' . dmoney(db_cents($existing['total']), $existing['currency']) . ' to ' . dmoney($tot['total'], $cur)); log_activity((int) $admin['id'], 'document_revised', $existing['doc_no'], $editReason); }
+            if ($isPosted) { log_activity((int) $admin['id'], 'document_revised', (string) $existing['doc_no'], $editReason); doc_event($pdo, $docId, (int) $admin['id'], 'revised', 'Posted document changed. Reason: ' . $editReason . '. Total ' . dmoney(db_cents($existing['total']), $existing['currency']) . ' to ' . dmoney($tot['total'], $cur)); log_activity((int) $admin['id'], 'document_revised', $existing['doc_no'], $editReason); }
             else doc_event($pdo, $docId, (int) $admin['id'], 'edited', 'Draft edited');
         }
         $li = $pdo->prepare('INSERT INTO document_lines (document_id, line_no, item_id, description, quantity, unit, unit_price, gross_amount, discount, tax_rate, tax_amount, line_total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
@@ -298,15 +309,16 @@ function save_document(PDO $pdo, array $admin, string $type, ?int $id, array $in
 function edit_block_reason(array $admin, array $d): string {
     if ($d['status'] === 'cancelled') return 'A cancelled document cannot be changed.';
     $super = $admin['role'] === 'super_admin';
-    if ($d['status'] === 'draft') return dcan('doc.edit', $admin) ? '' : 'You may not edit documents.';
+    if ($d['status'] === 'draft') return dcan('doc.edit', $admin, $d['doc_type']) ? '' : 'You may not edit this kind of document.';
     if ($d['doc_type'] === 'receipt') return $super ? '' : 'A posted receipt can only be changed by the super admin. Cancel it with a reason and raise a new one instead.';
-    if ($super || dcan('doc.edit_posted', $admin)) return '';
+    if ($super || dcan('doc.edit_posted', $admin, $d['doc_type'])) return '';
     return 'This document is posted and locked. Only a super admin, or someone allowed to edit posted documents, can change it.';
 }
 
 /* ===================== post / cancel / convert ===================== */
 function post_document(PDO $pdo, array $admin, int $id): array {
-    if (!dcan('doc.post', $admin)) return ['ok' => false, 'error' => 'You may not post documents.'];
+    $d0 = get_document($pdo, $id);
+    if (!$d0 || !dcan('doc.post', $admin, $d0['doc_type'])) return ['ok' => false, 'error' => 'You may not post this kind of document.'];
     $pdo->beginTransaction();
     try {
         $d = get_document($pdo, $id);
@@ -332,7 +344,8 @@ function post_document(PDO $pdo, array $admin, int $id): array {
 }
 
 function cancel_document(PDO $pdo, array $admin, int $id, string $reason): array {
-    if (!dcan('doc.cancel', $admin)) return ['ok' => false, 'error' => 'You may not cancel documents.'];
+    $d0 = get_document($pdo, $id);
+    if (!$d0 || !dcan('doc.cancel', $admin, $d0['doc_type'])) return ['ok' => false, 'error' => 'You may not cancel or void this kind of document.'];
     $reason = mb_substr(trim($reason), 0, 500);
     if (mb_strlen($reason) < 5) return ['ok' => false, 'error' => 'Give a reason of at least 5 characters.'];
     $pdo->beginTransaction();
@@ -351,9 +364,9 @@ function cancel_document(PDO $pdo, array $admin, int $id, string $reason): array
 }
 
 function convert_document(PDO $pdo, array $admin, int $id, string $target): array {
-    if (!dcan('doc.create', $admin)) return ['ok' => false, 'error' => 'You may not create documents.'];
     $src = get_document($pdo, $id);
-    if (!$src) return ['ok' => false, 'error' => 'Document not found.'];
+    if (!$src || !dcan('doc.view', $admin, $src['doc_type'])) return ['ok' => false, 'error' => 'Document not found.'];
+    if (!dcan('doc.create', $admin, $target)) return ['ok' => false, 'error' => 'You may not create this kind of document.'];
     if (!in_array($target, CONVERSIONS[$src['doc_type']] ?? [], true)) return ['ok' => false, 'error' => 'This cannot be converted that way.'];
     if ($src['status'] !== 'posted') return ['ok' => false, 'error' => 'Post (approve) the ' . strtolower(DOC_TYPES[$src['doc_type']]['label']) . ' before converting it.'];
     $s = $pdo->prepare("SELECT doc_no FROM documents WHERE parent_id = ? AND doc_type = ? AND status <> 'cancelled' LIMIT 1"); $s->execute([$id, $target]);
@@ -383,7 +396,7 @@ function convert_document(PDO $pdo, array $admin, int $id, string $target): arra
 
 /* ===================== listing ===================== */
 function list_documents(PDO $pdo, array $f, int $page = 1, int $per = 25): array {
-    $w = []; $a = [];
+    $w = [doc_type_in('d.doc_type')]; $a = [];
     if (!empty($f['type']) && isset(DOC_TYPES[$f['type']])) { $w[] = 'd.doc_type = ?'; $a[] = $f['type']; }
     if (!empty($f['status']) && in_array($f['status'], ['draft', 'posted', 'cancelled'], true)) { $w[] = 'd.status = ?'; $a[] = $f['status']; }
     if (!empty($f['customer_id'])) { $w[] = 'd.customer_id = ?'; $a[] = (int) $f['customer_id']; }

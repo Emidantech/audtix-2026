@@ -6,6 +6,7 @@ require_once __DIR__ . '/inc/render.php';
 $admin = doc_need('doc.print'); $pdo = db();
 $d = get_document($pdo, (int) ($_GET['id'] ?? 0));
 if (!$d) { http_response_code(404); exit('Document not found.'); }
+if (!dcan('doc.print', $admin, $d['doc_type']) || !dcan('doc.view', $admin, $d['doc_type'])) doc_need('doc.print', $d['doc_type']);
 $pdf = render_doc_pdf($d, doc_context($pdo, $d));
 doc_event($pdo, (int) $d['id'], (int) $admin['id'], 'downloaded', 'PDF ' . (isset($_GET['inline']) ? 'viewed' : 'downloaded'));
 $name = preg_replace('/[^A-Za-z0-9._-]/', '_', $d['doc_no'] . '-' . $d['customer_name']) . '.pdf';

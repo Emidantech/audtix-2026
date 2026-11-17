@@ -84,7 +84,7 @@ An addition to the admin panel; nothing existing was changed. It appears in the 
 
 **Install:** new databases get it from `database/audtix.mysql.sql`. An existing database: import `database/migrations/2026-11-16-business-documents.sql` once in phpMyAdmin (safe to re-run). It adds company settings, customers, products and services, documents with lines, numbering counters, the audit trail and three starter roles (Documents: sales, accountant, read only).
 
-**Set up:** open **Administration, Document settings** and fill in the company TIN, bank details, logo, default currency, VAT and terms. Give people access under **Roles and permissions**: Business documents (view, create, edit drafts, approve and post, download and print, cancel or void, edit posted), Customers, Products and services, Document reports, Document settings.
+**Set up:** open **Administration, Document settings** and fill in the company TIN, bank details, logo, default currency, VAT and terms. Give people access under **Roles and permissions**. Every module is switched on separately: Requisitions, Quotations (business documents), Invoices, Budgets, Proforma invoices and Receipts each have view, create, edit drafts, approve and post, download and print, cancel or void (and edit posted, except receipts); then Customers, Products and services, Document reports and Document settings. The sidebar shows only the modules a person can open, with the total of each. The dashboard shows quick-create tiles for the document types they may create.
 
 **Rules**
 - Flow: Requisition, Quotation, Invoice or Proforma, Receipt. Budgets stand alone. A conversion needs a posted source and carries customer and lines forward.

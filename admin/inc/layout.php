@@ -8,7 +8,7 @@ function asset_v(): string { return (string) setting('asset_version', ASSET_V); 
 function nav_counts(): array {
     static $c = null;
     if ($c !== null) return $c;
-    $c = ['q' => array_fill_keys(array_keys(QUOTE_STATUSES), 0), 'q_all' => 0, 'svc' => [], 'r_new' => 0, 'r_tax' => 0, 'r_audit' => 0, 'latest' => []];
+    $c = ['q' => array_fill_keys(array_keys(QUOTE_STATUSES), 0), 'q_all' => 0, 'svc' => [], 'r_new' => 0, 'r_tax' => 0, 'r_audit' => 0, 'latest' => [], 'docs' => []];
     try {
         $pdo = db();
         foreach ($pdo->query('SELECT status, COUNT(*) n FROM quotes GROUP BY status') as $r) { $c['q'][$r['status']] = (int) $r['n']; $c['q_all'] += (int) $r['n']; }
@@ -17,6 +17,12 @@ function nav_counts(): array {
         $c['latest'] = $pdo->query("SELECT 'quote' k, id, quote_no ref, COALESCE(company, client_name) who, service x, created_at FROM quotes WHERE status = 'pending'
                                     UNION ALL SELECT 'request' k, id, request_id ref, client_name who, category x, created_at FROM requests WHERE status = 'new'
                                     ORDER BY created_at DESC LIMIT 6")->fetchAll();
+    } catch (Throwable $e) {}
+    try {   // totals for the business-documents modules (all statuses; nothing is ever deleted)
+        $pdo = db();
+        foreach ($pdo->query('SELECT doc_type, COUNT(*) n FROM documents GROUP BY doc_type') as $r) $c['docs'][$r['doc_type']] = (int) $r['n'];
+        $c['docs']['_customers'] = (int) $pdo->query('SELECT COUNT(*) FROM customers')->fetchColumn();
+        $c['docs']['_items'] = (int) $pdo->query('SELECT COUNT(*) FROM items')->fetchColumn();
     } catch (Throwable $e) {}
     $c['notes'] = []; $c['unread'] = 0;
     try {
@@ -43,6 +49,8 @@ function brand_head(): string {
 }
 
 function badge(int $n, string $color = 'secondary'): string { return $n ? '<span class="nav-badge badge text-bg-' . $color . ' me-3">' . $n . '</span>' : ''; }
+/** Total shown beside a module in the sidebar (zero is shown too). */
+function count_badge(int $n): string { return '<span class="nav-badge badge text-bg-secondary me-3">' . $n . '</span>'; }
 function status_badge(string $s): string { return '<span class="badge text-bg-' . (QUOTE_STATUS_COLORS[$s] ?? 'secondary') . '">' . h(QUOTE_STATUSES[$s] ?? $s) . '</span>'; }
 
 function nav_link(string $href, string $icon, string $label, bool $active, string $extra = ''): string {
@@ -126,16 +134,17 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         echo nav_tree('inbox', 'Tax and audit', $sec === 'requests', $kids, $c['r_new'] ? '<span class="nav-badge badge text-bg-warning me-3">' . $c['r_new'] . '</span>' : '');
     }
 
-    if (can('documents.view') || can('customers.view') || can('items.view') || can('doc_reports.view')) {
+    $vis = function_exists('doc_types_for') ? doc_types_for('doc.view') : [];
+    if ($vis || can('customers.view') || can('items.view') || can('doc_reports.view')) {
+        $dc = $c['docs'];
         echo '<li class="nav-header">BUSINESS DOCUMENTS</li>';
-        if (can('documents.view')) {
+        if ($vis) {
             echo nav_link('doc-dashboard.php', 'graph-up', 'Documents overview', $active === 'docs:overview');
-            $kids = nav_link('docs.php', 'collection', 'All documents', $active === 'docs:all');
-            foreach (DOC_TYPES as $k => $t) $kids .= nav_link('docs.php?type=' . $k, DOC_ICONS[$k], $t['plural'], $active === 'docs:' . $k);
-            echo nav_tree('files', 'Documents', $sec === 'docs' && $sub !== 'overview', $kids);
+            foreach ($vis as $k) echo nav_link('docs.php?type=' . $k, DOC_ICONS[$k], DOC_TYPES[$k]['nav'] ?? DOC_TYPES[$k]['plural'], $active === 'docs:' . $k, count_badge((int) ($dc[$k] ?? 0)));
+            if (count($vis) > 1) echo nav_link('docs.php', 'collection', 'All documents', $active === 'docs:all', count_badge(array_sum(array_map(fn($k) => (int) ($dc[$k] ?? 0), $vis))));
         }
-        if (can('customers.view')) echo nav_link('customers.php', 'building', 'Customers', $sec === 'customers');
-        if (can('items.view')) echo nav_link('items.php', 'box-seam', 'Products and services', $sec === 'items');
+        if (can('customers.view')) echo nav_link('customers.php', 'building', 'Customers', $sec === 'customers', count_badge((int) ($dc['_customers'] ?? 0)));
+        if (can('items.view')) echo nav_link('items.php', 'box-seam', 'Products & services', $sec === 'items', count_badge((int) ($dc['_items'] ?? 0)));
         if (can('doc_reports.view')) echo nav_link('reports.php', 'bar-chart-line', 'Document reports', $sec === 'doc_reports');
     }
 

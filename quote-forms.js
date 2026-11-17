@@ -9,7 +9,7 @@ window.QUOTE_FORMS = {
    {
     "name": "client_type",
     "label": "Who is asking?",
-    "type": "radio",
+    "type": "select",
     "required": true,
     "options": [
      [
