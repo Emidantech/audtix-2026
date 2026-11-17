@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audtix Systems</title><script src="brand.js?v=20261117a"></script>
+<title>Audtix Systems</title><script src="brand.js?v=20261117b"></script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20261117a">
+<link rel="stylesheet" href="styles.css?v=20261117b">
 <style id="audtix-hero-overrides">
 /* Audtix hero refresh — these rules intentionally use !important to override styles.css. */
 :root { --audtix-blue:#087cf0; --audtix-navy:#00142f; --audtix-ink:#061b3d; }
@@ -54,12 +54,12 @@ body { margin:0 !important; overflow-x:hidden !important; }
 .hero2-svc .hsvc > span:last-child > span { color:#b3c9e9 !important; font-family:'Instrument Sans',sans-serif !important; font-size:15px !important; line-height:1.65 !important; }
 
 .strip2 { position:relative !important; z-index:3 !important; background:#fff !important; }
-.strip2 > .wrap { width:min(100% - 64px,1398px) !important; min-height:130px !important; margin:0 auto !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:clamp(20px,4vw,58px) !important; }
-.strip2 .lab { color:#536b94 !important; font-family:'IBM Plex Mono',monospace !important; font-size:13px !important; letter-spacing:.14em !important; text-transform:uppercase !important; white-space:nowrap !important; }
-.strip2 .p-lenovo { width:145px !important; height:66px !important; object-fit:contain !important; }
-.strip2 .p-dell { width:215px !important; height:66px !important; object-fit:contain !important; }
-.strip2 .p-otibee { display:flex !important; align-items:center !important; gap:12px !important; padding:12px 18px !important; border:1px solid #d5e2f6 !important; border-radius:10px !important; color:#09285d !important; white-space:nowrap !important; }
-.strip2 .p-otibee img { width:30px !important; height:30px !important; object-fit:contain !important; }
+.strip2 > .wrap { width:min(100% - 64px,1398px) !important; min-height:0 !important;padding-block:12px !important; margin:0 auto !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:clamp(20px,4vw,58px) !important; }
+.strip2 .lab { color:#536b94 !important; font-family:'IBM Plex Mono',monospace !important; font-size:11px !important; letter-spacing:.12em !important; text-transform:uppercase !important; white-space:nowrap !important; }
+.strip2 .p-lenovo { width:auto !important; height:42px !important; object-fit:contain !important; }
+.strip2 .p-dell { width:auto !important; height:40px !important; object-fit:contain !important; }
+.strip2 .p-otibee { display:flex !important; align-items:center !important; gap:8px !important; padding:8px 14px !important; font-size:14px !important; border:1px solid #d5e2f6 !important; border-radius:8px !important; color:#09285d !important; white-space:nowrap !important; }
+.strip2 .p-otibee img { width:22px !important; height:22px !important; object-fit:contain !important; }
 
 @media (max-width:1100px) {
  .hero2 { min-height:680px !important; }
@@ -67,7 +67,7 @@ body { margin:0 !important; overflow-x:hidden !important; }
  .hero2 h1 { font-size:clamp(40px,5vw,58px) !important; }
  .hero2 .lead { font-size:17px !important; }
  .hero2-svc .hsvc { min-height:108px !important; padding:18px !important; gap:15px !important; }
- .strip2 > .wrap { flex-wrap:wrap !important; justify-content:center !important; padding-block:22px !important; }
+ .strip2 > .wrap { flex-wrap:wrap !important; justify-content:center !important; padding-block:12px !important; }
 }
 @media (max-width:760px) {
  .site-header .wrap { width:calc(100% - 36px) !important; }
@@ -90,11 +90,11 @@ body { margin:0 !important; overflow-x:hidden !important; }
  .hero2-svc .hsvc-ic { flex-basis:46px !important; width:46px !important; height:46px !important; }
  .hero2-svc .hsvc b { font-size:16px !important; }
  .hero2-svc .hsvc > span:last-child > span { font-size:14px !important; }
- .strip2 > .wrap { width:calc(100% - 36px) !important; gap:18px 25px !important; }
+ .strip2 > .wrap { width:calc(100% - 36px) !important; gap:10px 18px !important; }
  .strip2 .lab { width:100% !important; text-align:center !important; font-size:11px !important; }
- .strip2 .p-lenovo { width:112px !important; }
- .strip2 .p-dell { width:155px !important; }
- .strip2 .p-otibee { padding:9px 12px !important; font-size:13px !important; }
+ .strip2 .p-lenovo { height:34px !important; }
+ .strip2 .p-dell { height:32px !important; }
+ .strip2 .p-otibee { padding:6px 10px !important; font-size:12.5px !important; }
 }
 @media (max-width:420px) {
  .hero2 .wrap.hero2-in { width:calc(100% - 32px) !important; }
@@ -264,6 +264,6 @@ body { margin:0 !important; overflow-x:hidden !important; }
   </div>
   <div class="fbase"><span>© 2026 Audtix Systems. info@audtix.com</span><span>Lenovo and Dell Technologies are trademarks of their respective owners.</span></div>
 </div></footer>
-<script src="app.js?v=20261117a"></script>
+<script src="app.js?v=20261117b"></script>
 </body>
 </html>

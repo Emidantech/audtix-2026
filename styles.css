@@ -533,11 +533,11 @@ html.nav-lock .fab { display: none; }
 
 /* Partner strip under the hero */
 .strip2 { background: #F4F7FB; border-bottom: 1px solid var(--line); }
-.strip2 .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px 22px; padding-block: 24px; flex-wrap: wrap; }
-.strip2 .lab { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #3C5476; }
-.strip2 .p-lenovo { height: 62px; width: auto; border-radius: 4px; }
-.strip2 .p-dell { height: 62px; width: auto; }
-.strip2 .p-otibee { display: inline-flex; align-items: center; gap: 10px; height: 62px; padding: 0 20px; background: #fff; border: 1.5px solid #C9D8EC; border-radius: 10px; }
-.strip2 .p-otibee img { width: 30px; height: 30px; }
-.strip2 .p-otibee b { font-size: 17px; font-weight: 700; color: #0A2A55; }
-@media (max-width: 760px) { .strip2 .wrap { justify-content: center; } .strip2 .p-lenovo, .strip2 .p-dell, .strip2 .p-otibee { height: 54px; } }
+.strip2 .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px 20px; padding-block: 12px; flex-wrap: wrap; }
+.strip2 .lab { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #3C5476; }
+.strip2 .p-lenovo { height: 40px; width: auto; border-radius: 4px; }
+.strip2 .p-dell { height: 38px; width: auto; }
+.strip2 .p-otibee { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; background: #fff; border: 1px solid #C9D8EC; border-radius: 8px; }
+.strip2 .p-otibee img { width: 22px; height: 22px; }
+.strip2 .p-otibee b { font-size: 14px; font-weight: 700; color: #0A2A55; }
+@media (max-width: 760px) { .strip2 .wrap { justify-content: center; } .strip2 .p-lenovo, .strip2 .p-dell, .strip2 .p-otibee { height: 36px; } .strip2 .p-dell { height: 34px; } }

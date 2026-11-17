@@ -75,7 +75,7 @@
   function addRow(l) {
     l = l || {}; var i = idx++, row = document.createElement("div"); row.className = "lrow";
     row.innerHTML =
-      '<div class="f d"><input type="hidden" data-k="item_id" name="lines[' + i + '][item_id]" value="' + esc(l.item_id || "") + '"><textarea data-k="description" name="lines[' + i + '][description]" rows="1" placeholder="Search the price list or type a description">' + esc(l.description || "") + '</textarea><div class="ac" hidden></div></div>' +
+      '<div class="f d"><select class="svc-pick" data-k="svc" aria-label="Choose a service or item"></select><input type="hidden" data-k="item_id" name="lines[' + i + '][item_id]" value="' + esc(l.item_id || "") + '"><textarea data-k="description" name="lines[' + i + '][description]" rows="1" placeholder="Description (search the price list or type your own)">' + esc(l.description || "") + '</textarea><div class="ac" hidden></div></div>' +
       '<div class="f" data-l="Qty"><input data-k="quantity" placeholder="Qty" name="lines[' + i + '][quantity]" inputmode="decimal" value="' + esc(l.quantity == null ? "1" : l.quantity) + '" aria-label="Quantity"></div>' +
       '<div class="f" data-l="Unit"><input data-k="unit" placeholder="Unit" name="lines[' + i + '][unit]" value="' + esc(l.unit || "") + '" maxlength="30" aria-label="Unit"></div>' +
       '<div class="f" data-l="Unit price"><input data-k="unit_price" placeholder="Price" name="lines[' + i + '][unit_price]" inputmode="decimal" value="' + esc(l.unit_price == null ? "" : l.unit_price) + '" aria-label="Unit price"></div>' +
@@ -83,7 +83,25 @@
       '<div class="f" data-l="Tax %"><input data-k="tax_rate" placeholder="Tax %" name="lines[' + i + '][tax_rate]" inputmode="decimal" value="' + esc(l.tax_rate == null ? "0" : l.tax_rate) + '" aria-label="Tax percent"></div>' +
       '<div class="f lt" data-l="Total" aria-label="Line total"></div><button type="button" class="x" aria-label="Remove line">&times;</button>';
     box.appendChild(row);
-    var ta = $('[data-k="description"]', row), ac = $(".ac", row);
+    var ta = $('[data-k="description"]', row), ac = $(".ac", row), sp = $('[data-k="svc"]', row);
+    /* service dropdown: Audtix services, then the price list, and "Something else" last */
+    (function () {
+      var h = '<option value="">Choose a service or item...</option>';
+      if ((data.services || []).length) h += '<optgroup label="Our services">' + data.services.map(function (n) { return '<option value="s:' + esc(n) + '">' + esc(n) + "</option>"; }).join("") + "</optgroup>";
+      if ((data.items || []).length) h += '<optgroup label="Price list">' + data.items.map(function (it) { return '<option value="i:' + it.id + '">' + esc(it.name) + "</option>"; }).join("") + "</optgroup>";
+      h += '<option value="other">Something else (type it below)</option>'; sp.innerHTML = h;
+      var d0 = (l.description || "").trim(), iid = String(l.item_id || "");
+      if (iid && sp.querySelector('option[value="i:' + iid + '"]')) sp.value = "i:" + iid;
+      else if (d0) { var m = (data.services || []).indexOf(d0) >= 0 ? "s:" + d0 : "other"; var o = Array.prototype.filter.call(sp.options, function (x) { return x.value === m; })[0]; sp.value = o ? m : "other"; }
+    })();
+    sp.addEventListener("change", function () {
+      var v = sp.value, id = $('[data-k="item_id"]', row);
+      if (v === "") return;
+      if (v === "other") { id.value = ""; ta.value = ""; fit(); recalc(); ta.focus(); return; }
+      if (v.indexOf("s:") === 0) { id.value = ""; ta.value = v.slice(2); fit(); recalc(); $('[data-k="unit_price"]', row).focus(); return; }
+      var it = (data.items || []).filter(function (x) { return "i:" + x.id === v; })[0]; if (!it) return;
+      ta.value = it.description; id.value = it.id; $('[data-k="unit"]', row).value = it.unit || ""; $('[data-k="unit_price"]', row).value = it.price; $('[data-k="tax_rate"]', row).value = it.tax || "0"; fit(); recalc();
+    });
     function fit() { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; } fit();
     ta.addEventListener("input", function () { fit(); recalc(); });
     ta.addEventListener("input", debounce(function () {

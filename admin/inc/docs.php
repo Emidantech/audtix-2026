@@ -100,7 +100,7 @@ function amount_in_words(int $cents, string $cur = 'UGX'): string {
     };
     [$major, $minor] = CURRENCIES[$cur] ?? [$cur, 'Cents'];
     $whole = intdiv(abs($cents), 100); $frac = abs($cents) % 100;
-    $s = $major . ' ' . $say($whole);
+    $s = ($cur === 'UGX' ? '' : $major . ' ') . $say($whole);
     if ($frac) $s .= ' and ' . $say($frac) . ' ' . ($frac === 1 && $minor === 'Cents' ? 'Cent' : $minor);
     return $s . ' Only';
 }
@@ -454,6 +454,24 @@ function company_lines(): array {
     return array_values(array_filter([doc_setting('company_address'), trim(doc_setting('company_phone') . '   ' . doc_setting('company_email')), doc_setting('company_web'), doc_setting('company_tin') ? 'TIN: ' . doc_setting('company_tin') : '']));
 }
 function logo_url(?string $f): string { return $f && preg_match('/^[a-f0-9]{24}\.png$/', $f) ? 'logo.php?f=' . $f : ''; }
+
+/* ===================== service picker for document lines ===================== */
+/** Audtix's own services, as shown on the website; offered first in the line-item dropdown. */
+function doc_service_catalogue(): array {
+    $o = [];
+    try { foreach (quote_services() as $svc) if (!empty($svc['title'])) $o[] = (string) $svc['title']; } catch (Throwable $e) {}
+    foreach (['Tax services', 'Audit services'] as $x) if (!in_array($x, $o, true)) $o[] = $x;
+    return $o;
+}
+/** Active products and services from the price list (so their price, unit and tax fill in). */
+function doc_price_list(PDO $pdo): array {
+    $o = [];
+    try {
+        foreach ($pdo->query('SELECT id, item_type, name, description, unit, unit_price, tax_rate FROM items WHERE is_active = 1 ORDER BY name LIMIT 300')->fetchAll() as $r)
+            $o[] = ['id' => (int) $r['id'], 'type' => $r['item_type'], 'name' => $r['name'], 'description' => $r['description'] ?: $r['name'], 'unit' => $r['unit'], 'price' => rtrim(rtrim(number_format((float) $r['unit_price'], 2, '.', ''), '0'), '.'), 'tax' => rtrim(rtrim(number_format((float) $r['tax_rate'], 2, '.', ''), '0'), '.')];
+    } catch (Throwable $e) {}
+    return $o;
+}
 
 /* ===================== safety net for the document pages ===================== */
 /* A slow or failing query must never leave the browser waiting for a gateway timeout or show a blank "page isn't working":
