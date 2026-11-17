@@ -3,7 +3,6 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   $$("[data-menu]").forEach(function (b) { b.addEventListener("click", function () { var o = document.body.classList.toggle("menu-open"); var bb = document.querySelector(".burger"); if (bb) bb.setAttribute("aria-expanded", o ? "true" : "false"); }); });
   $$("[data-grp]").forEach(function (b) { b.addEventListener("click", function () { var g = b.parentNode, o = g.classList.toggle("open"); b.setAttribute("aria-expanded", o ? "true" : "false"); }); });
-  $$("[data-confirm]").forEach(function (b) { b.addEventListener("click", function (e) { if (!window.confirm(b.getAttribute("data-confirm"))) e.preventDefault(); }); });
   $$("[data-autosubmit]").forEach(function (s) { s.addEventListener("change", function () { s.form.submit(); }); });
   $$("[data-print]").forEach(function (b) { b.addEventListener("click", function () { window.print(); }); });
   $$("[data-preset]").forEach(function (b) {

@@ -454,3 +454,25 @@ function company_lines(): array {
     return array_values(array_filter([doc_setting('company_address'), trim(doc_setting('company_phone') . '   ' . doc_setting('company_email')), doc_setting('company_web'), doc_setting('company_tin') ? 'TIN: ' . doc_setting('company_tin') : '']));
 }
 function logo_url(?string $f): string { return $f && preg_match('/^[a-f0-9]{24}\.png$/', $f) ? 'logo.php?f=' . $f : ''; }
+
+/* ===================== safety net for the document pages ===================== */
+/* A slow or failing query must never leave the browser waiting for a gateway timeout or show a blank "page isn't working":
+   the page stops after a short time, the real error goes to the server log, and a super admin sees the technical reason. */
+function doc_guard(): void {
+    static $on = false; if ($on) return; $on = true;
+    @set_time_limit(40);
+    try {
+        $pdo = db();
+        if (str_starts_with((string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql')) { $pdo->exec('SET SESSION innodb_lock_wait_timeout = 10'); }
+    } catch (Throwable $e) { /* the page itself reports a missing database */ }
+    set_exception_handler(function (Throwable $e): void {
+        error_log('documents: ' . get_class($e) . ': ' . $e->getMessage() . ' at ' . basename($e->getFile()) . ':' . $e->getLine());
+        if (!headers_sent()) http_response_code(500);
+        $m = me(); $detail = ($m && ($m['role'] ?? '') === 'super_admin') ? get_class($e) . ': ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')' : '';
+        $missing = $e instanceof PDOException && (str_contains($e->getMessage(), "doesn't exist") || str_contains($e->getMessage(), 'no such table') || str_contains($e->getMessage(), 'Unknown column'));
+        echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Something went wrong</title><body style="font-family:Arial,sans-serif;max-width:640px;margin:12vh auto;padding:0 18px;color:#10202F"><h2>Something went wrong</h2><p>'
+            . ($missing ? 'The database is missing part of the business documents setup. Import <b>database/migrations/2026-11-16-business-documents.sql</b> in phpMyAdmin, then try again.' : 'The page could not finish. Nothing was lost; go back and try again.')
+            . '</p>' . ($detail !== '' ? '<p style="background:#F1F5FA;padding:10px 12px;border-radius:8px;font:13px monospace;word-break:break-word">' . h($detail) . '</p>' : '') . '<p><a href="index.php">Back to the dashboard</a></p></body>';
+    });
+}
+doc_guard();

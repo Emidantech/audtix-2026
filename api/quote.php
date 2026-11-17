@@ -8,6 +8,7 @@ declare(strict_types=1);
  */
 require __DIR__ . '/lib/common.php';
 require __DIR__ . '/lib/quotes.php';
+require __DIR__ . '/lib/customers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -78,6 +79,7 @@ if ($pdo) {
         quote_event($pdo, $pk, null, 'system', 'Quotation request received from the website');
         $pdo->commit(); $dbOk = true;
         $stored = quote_store_files($pdo, $pk, $quoteNo, $files, 'client');
+        capture_customer($pdo, ['name' => $client, 'contact_person' => $name, 'address' => (string) ($data['location'] ?? ''), 'phone' => (string) $data['phone'], 'email' => (string) $data['email'], 'note' => 'Registered automatically from quotation request ' . $quoteNo . '.']);
         notify_admins($pdo, 'quote', 'quotes', 'New quotation request ' . $quoteNo, $client . ' · ' . $title . ($summary ? ' · ' . $summary : ''), 'quote.php?id=' . $pk);
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); $dbErr = $e->getMessage(); $dbOk = false; }
 }
