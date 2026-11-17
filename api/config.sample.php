@@ -8,6 +8,9 @@ return [
     'db_user' => 'u123456789_audtix',
     'db_pass' => 'CHANGE-ME',
 
+    // Public address of the site, used for the "Turn this RFQ into action" button in notification emails.
+    'site_url'    => 'https://audtix.com',
+
     // Where the notification copy goes
     'notify_to'   => 'info@audtix.com',
     'notify_cc'   => 'audtixsystem@gmail.com',

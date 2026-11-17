@@ -9,6 +9,7 @@ declare(strict_types=1);
 require __DIR__ . '/lib/common.php';
 require __DIR__ . '/lib/quotes.php';
 require __DIR__ . '/lib/customers.php';
+require __DIR__ . '/lib/rfq.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -90,11 +91,11 @@ if (!$dbOk && $files && is_dir($dir)) {  // keep the files on disk even without 
 /* 2) email the team */
 $dbLine = $dbOk ? 'Saved to the database: yes' : 'Saved to the database: NO (database problem, this email is the record)';
 $subject = '[QUOTE ' . quote_service_tag($service) . "] $quoteNo: $client";
-$text = "New quotation request: $title\nQuote number: $quoteNo\nReceived (UTC): " . now() . "\n$dbLine\nDocuments: " . count($stored) . "\n" . quote_rows_text($rows);
+$text = "New quotation request: $title\nQuote number: $quoteNo\nReceived (UTC): " . now() . "\n$dbLine\nDocuments: " . count($stored) . "\n" . rfq_email_button_text('quote', $pk) . "\n" . quote_rows_text($rows);
 $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#10202f"><h2 style="margin:0 0 6px">New quotation request: ' . h($title) . '</h2>'
       . '<p style="margin:0 0 12px"><b style="font-family:monospace;font-size:16px;background:#eaf2fc;padding:3px 8px;border-radius:5px">' . h($quoteNo) . '</b></p>'
       . '<p style="margin:0 0 12px;color:#5a6b7d">Received (UTC): ' . h(now()) . ' &middot; ' . h($dbLine) . ' &middot; Documents attached: ' . count($stored) . '</p>'
-      . quote_rows_html($rows) . '</div>';
+      . rfq_email_button('quote', $pk) . quote_rows_html($rows) . '</div>';
 $att = []; $sum = 0;
 foreach ($stored as $f) { if ($sum + $f['size'] > 14 * 1048576) continue; $sum += $f['size']; $att[] = ['name' => $f['orig'], 'mime' => $f['mime'], 'path' => $f['path']]; }
 $skipMail = $dbOk && !notify_enabled('quote');

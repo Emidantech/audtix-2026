@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
+require_once __DIR__ . '/inc/rfq.php';
 $admin = require_login();
 require_perm('quotes.view');
 $pdo = db(); $me = (int) $admin['id'];
@@ -132,6 +133,7 @@ page_head($q['quote_no'], $admin, 'quote', [], $actions);
       <div><dt>Phone</dt><dd><a href="tel:<?= h(preg_replace('/[^\d+]/', '', $q['phone'])) ?>"><?= h($q['phone']) ?></a> &middot; <a href="https://wa.me/<?= h($wa) ?>" rel="noopener noreferrer" target="_blank">WhatsApp</a></dd></div>
       <?php if ($q['location']): ?><div><dt>Location</dt><dd><?= h($q['location']) ?></dd></div><?php endif; ?></dl></div></div>
 
+    <div class="card card-outline card-warning"><div class="card-header"><h3 class="card-title"><i class="bi bi-lightning-charge"></i> Turn into a document</h3></div><div class="card-body"><?= rfq_buttons($admin, 'quote', $id) ?></div></div>
     <?php if (can('quotes.edit')): ?>
     <div class="card"><div class="card-header"><h3 class="card-title">Status</h3></div><div class="card-body">
       <div class="d-flex flex-wrap gap-2 mb-3">

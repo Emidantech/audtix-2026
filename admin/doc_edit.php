@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 require_once __DIR__ . '/inc/docs.php';
+require_once __DIR__ . '/inc/rfq.php';
 $admin = require_login(); $pdo = db();
 $type = (string) ($_GET['type'] ?? $_POST['type'] ?? ''); $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 if (!isset(DOC_TYPES[$type])) { http_response_code(404); exit('Unknown document type.'); }
@@ -14,11 +15,14 @@ if ($id) {
 } elseif (!dcan('doc.create', $admin, $type)) doc_need('doc.create', $type);
 
 $errors = []; $in = null;
+$rfqRef = (string) ($_GET['rfq'] ?? $_POST['rfq'] ?? ''); $rfq = null;       // "quote:12" or "request:5": the request this document answers
+if (!$existing && preg_match('/^(quote|request):(\d+)$/', $rfqRef, $m) && rfq_can_view($m[1])) $rfq = rfq_load($pdo, $m[1], (int) $m[2]);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $in = $_POST; $act = $_POST['action'] ?? 'save';
     $r = save_document($pdo, $admin, $type, $id ?: null, $in);
     if ($r['ok']) {
         $nid = $r['id'];
+        if ($rfq && !$id) { $dn = $pdo->prepare('SELECT doc_no FROM documents WHERE id = ?'); $dn->execute([$nid]); rfq_event($pdo, $rfq['kind'], $rfq['id'], (int) $admin['id'], 'note', DOC_TYPES[$type]['label'] . ' ' . (string) $dn->fetchColumn() . ' created from this request'); }
         if ($act === 'post') {
             $p = post_document($pdo, $admin, $nid);
             if ($p['ok']) { flash(DOC_TYPES[$type]['label'] . ' saved and posted.'); redirect('doc.php?id=' . $nid); }
@@ -36,6 +40,10 @@ if ($in === null) {
     } else {
         $days = (int) doc_setting($type === 'invoice' ? 'invoice_due_days' : 'quote_valid_days', '30');
         $in = ['customer_id' => (int) ($_GET['customer_id'] ?? 0), 'doc_date' => $today, 'due_date' => $T['due'] !== '' ? (new DateTime($today))->modify("+$days days")->format('Y-m-d') : '', 'currency' => doc_setting('default_currency', 'UGX'), 'salesperson' => $admin['full_name'], 'reference_text' => '', 'payment_method' => '', 'payment_ref' => '', 'parent_id' => (int) ($_GET['parent_id'] ?? 0), 'notes' => '', 'terms' => doc_setting('terms_default'), 'version' => 0, 'amount' => '', 'lines' => [['description' => '', 'quantity' => '1']]];
+        if ($rfq) {   // start from the request: customer, reference and one line describing what was asked for
+            $in['reference_text'] = $rfq['ref']; if (!$in['customer_id'] && $rfq['kind'] === 'quote') { /* customer comes from rfq.php */ }
+            $in['lines'] = [['description' => $rfq['title'] . ($rfq['summary'] !== '' ? ': ' . $rfq['summary'] : ''), 'quantity' => '1']];
+        }
     }
 }
 function plain_num($v): string { $s = rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.'); return $s === '' ? '0' : $s; }
@@ -56,7 +64,7 @@ dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:
 <?php if (!empty($errors['form'])): ?><div class="flash bad" role="alert"><?= h($errors['form']) ?></div><?php endif; ?>
 <?php if ($isPosted): ?><div class="flash bad">This document is <b>posted</b>. Changes are recorded in its history with your reason, and the earlier version is kept.</div><?php endif; ?>
 <script type="application/json" id="doc-data"><?= str_replace('<', '<', json_encode($boot, JSON_UNESCAPED_UNICODE | JSON_HEX_AMP)) ?></script>
-<form method="post" id="docform" autocomplete="off"><?= csrf_field() ?><input type="hidden" name="type" value="<?= h($type) ?>"><input type="hidden" name="id" value="<?= (int) $id ?>"><input type="hidden" name="version" value="<?= (int) ($in['version'] ?? 0) ?>"><input type="hidden" name="parent_id" value="<?= (int) ($in['parent_id'] ?? 0) ?>" id="parent_id_f">
+<form method="post" id="docform" autocomplete="off"><?= csrf_field() ?><input type="hidden" name="type" value="<?= h($type) ?>"><?php if ($rfq): ?><input type="hidden" name="rfq" value="<?= h($rfq['kind'] . ':' . $rfq['id']) ?>"><?php endif; ?><input type="hidden" name="id" value="<?= (int) $id ?>"><input type="hidden" name="version" value="<?= (int) ($in['version'] ?? 0) ?>"><input type="hidden" name="parent_id" value="<?= (int) ($in['parent_id'] ?? 0) ?>" id="parent_id_f">
 <div class="card"><h2>Customer</h2>
   <input type="hidden" name="customer_id" id="customer_id" value="<?= (int) ($in['customer_id'] ?? 0) ?>">
   <div class="cust-pick"><label <?= $cust ? 'hidden' : '' ?>>Search customers by name, TIN, phone or email<input type="search" id="cust-q" placeholder="Start typing..."></label><div class="ac" id="cust-ac" hidden></div>
