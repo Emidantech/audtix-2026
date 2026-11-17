@@ -471,8 +471,8 @@ function doc_guard(): void {
         $m = me(); $detail = ($m && ($m['role'] ?? '') === 'super_admin') ? get_class($e) . ': ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')' : '';
         $missing = $e instanceof PDOException && (str_contains($e->getMessage(), "doesn't exist") || str_contains($e->getMessage(), 'no such table') || str_contains($e->getMessage(), 'Unknown column'));
         echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Something went wrong</title><body style="font-family:Arial,sans-serif;max-width:640px;margin:12vh auto;padding:0 18px;color:#10202F"><h2>Something went wrong</h2><p>'
-            . ($missing ? 'The database is missing part of the business documents setup. Import <b>database/migrations/2026-11-16-business-documents.sql</b> in phpMyAdmin, then try again.' : 'The page could not finish. Nothing was lost; go back and try again.')
-            . '</p>' . ($detail !== '' ? '<p style="background:#F1F5FA;padding:10px 12px;border-radius:8px;font:13px monospace;word-break:break-word">' . h($detail) . '</p>' : '') . '<p><a href="index.php">Back to the dashboard</a></p></body>';
+            . ($missing ? 'The database is missing part of the business documents setup. A super admin can add it with one click (nothing existing is changed).' : 'The page could not finish. Nothing was lost; go back and try again.')
+            . '</p>' . ($missing && $m && ($m['role'] ?? '') === 'super_admin' ? '<p><a href="doc-setup.php" style="display:inline-block;background:#1664C0;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:700">Set up the database now</a></p>' : '') . ($detail !== '' ? '<p style="background:#F1F5FA;padding:10px 12px;border-radius:8px;font:13px monospace;word-break:break-word">' . h($detail) . '</p>' : '') . '<p><a href="index.php">Back to the dashboard</a></p></body>';
     });
 }
 doc_guard();
