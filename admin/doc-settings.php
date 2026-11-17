@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$err) {
         foreach ($v as $k => $x) save_doc_setting($pdo, $k, $x);
         if ($logo) save_doc_setting($pdo, 'company_logo', $logo); elseif (!empty($_POST['reset_logo'])) save_doc_setting($pdo, 'company_logo', '');
-        log_activity((int) $admin['id'], 'settings_updated'); flash('Settings saved.'); redirect('settings.php');
+        log_activity((int) $admin['id'], 'settings_updated'); flash('Settings saved.'); redirect('doc-settings.php');
     }
 }
 $S = doc_settings(); if ($_SERVER['REQUEST_METHOD'] === 'POST') $S = array_merge($S, $v ?? []);

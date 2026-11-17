@@ -3,7 +3,7 @@ declare(strict_types=1);
 /* Report building and export (HTML table data, PDF, Excel). Money columns carry integer cents. */
 
 function report_types(): array {
-    $r = []; foreach (DOC_TYPES as $k => $t) $r[$k] = $t['label'] . ' report';
+    $r = []; foreach (DOC_TYPES as $k => $t) if (dcan('doc.view', null, $k)) $r[$k] = $t['label'] . ' report';
     $r['customers'] = 'Customer transaction report'; $r['products'] = 'Products and services transaction report';
     return $r;
 }
@@ -52,6 +52,7 @@ function build_report(PDO $pdo, array $p): array {
         }
         $o = $pdo->query("SELECT i.customer_id, i.currency, SUM(i.total) AS t, (SELECT COALESCE(SUM(r.total),0) FROM documents r WHERE r.doc_type='receipt' AND r.status='posted' AND r.parent_id IN (SELECT id FROM documents x WHERE x.customer_id = i.customer_id AND x.currency = i.currency AND x.doc_type='invoice' AND x.status='posted')) AS p FROM documents i WHERE i.doc_type='invoice' AND i.status='posted' GROUP BY i.customer_id, i.currency")->fetchAll();
         $outs = []; foreach ($o as $r) $outs[$r['customer_id'] . '|' . $r['currency']] = db_cents($r['t']) - db_cents($r['p']);
+        if (!dcan('doc.view', null, 'invoice')) $outs = [];
         foreach ($g as $k => &$r) $r['out'] = $outs[$k] ?? 0; unset($r);
         uasort($g, fn($a, $b) => $b['invoiced'] <=> $a['invoiced']);
         $out['columns'] = [['Customer', 'customer', 't', 200], ['Cur', 'cur', 't', 34], ['Documents', 'docs', 'n', 62], ['Invoices', 'inv_n', 'n', 56], ['Invoiced (posted)', 'invoiced', 'm', 110], ['Receipts (posted)', 'receipts', 'm', 110], ['Cancelled', 'canc', 'n', 56], ['Outstanding now', 'out', 'm', 110]];
@@ -59,7 +60,7 @@ function build_report(PDO $pdo, array $p): array {
         foreach ($g as $r) { $inv[$r['cur']] = ($inv[$r['cur']] ?? 0) + $r['invoiced']; $rc[$r['cur']] = ($rc[$r['cur']] ?? 0) + $r['receipts']; $ot[$r['cur']] = ($ot[$r['cur']] ?? 0) + $r['out']; }
         $out['summary'] = [['Customers with activity', (string) count(array_unique(array_map(fn($r) => $r['cid'], $g)))], ['Invoiced (posted)', cur_totals($inv)], ['Receipts (posted)', cur_totals($rc)], ['Outstanding now (all time)', cur_totals($ot)]];
     } else {   // products
-        $dt = (string) ($p['doc_type'] ?? 'invoice'); $w = "d.status = 'posted' AND d.doc_date >= ? AND d.doc_date <= ?"; $a = [$from, $to];
+        $dt = (string) ($p['doc_type'] ?? 'invoice'); $w = "d.status = 'posted' AND d.doc_date >= ? AND d.doc_date <= ? AND " . doc_type_in('d.doc_type'); $a = [$from, $to];
         if (isset(DOC_TYPES[$dt]) && $dt !== 'receipt') { $w .= ' AND d.doc_type = ?'; $a[] = $dt; } else { $dt = 'all'; $w .= " AND d.doc_type <> 'receipt'"; }
         if ($f['customer_id']) { $w .= ' AND d.customer_id = ?'; $a[] = $f['customer_id']; }
         if ($f['created_by']) { $w .= ' AND d.created_by = ?'; $a[] = $f['created_by']; }

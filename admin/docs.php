@@ -2,7 +2,7 @@
 require __DIR__ . '/inc/boot.php';
 require_once __DIR__ . '/inc/docs.php';
 $admin = doc_need('doc.view'); $pdo = db();
-$type = $_GET['type'] ?? ''; if (!isset(DOC_TYPES[$type])) $type = '';
+$type = $_GET['type'] ?? ''; if (!isset(DOC_TYPES[$type])) $type = ''; elseif (!dcan('doc.view', $admin, $type)) doc_need('doc.view', $type);
 $T = $type ? DOC_TYPES[$type] : null;
 $f = ['type' => $type, 'status' => $_GET['status'] ?? '', 'q' => trim((string) ($_GET['q'] ?? '')), 'customer_id' => (int) ($_GET['customer_id'] ?? 0), 'created_by' => (int) ($_GET['created_by'] ?? 0), 'from' => $_GET['from'] ?? '', 'to' => $_GET['to'] ?? ''];
 $res = list_documents($pdo, $f, max(1, (int) ($_GET['page'] ?? 1)));
@@ -12,7 +12,7 @@ dm_head($T ? $T['plural'] : 'All documents', $admin, 'docs:' . ($type ?: 'all'))
 $qs = fn(array $o) => '?' . http_build_query(array_filter(array_merge(['type' => $type, 'status' => $f['status'], 'q' => $f['q'], 'customer_id' => $f['customer_id'] ?: '', 'created_by' => $f['created_by'] ?: '', 'from' => $f['from'], 'to' => $f['to']], $o), fn($v) => $v !== '' && $v !== null));
 ?>
 <div class="hdr"><h1><?= h($T ? $T['plural'] : 'All documents') ?></h1><span class="spacer"></span>
-<?php if (dcan('doc.create', $admin)): if ($type): ?><a class="btn" href="doc_edit.php?type=<?= h($type) ?>">New <?= h(strtolower($T['label'])) ?></a><?php else: foreach (DOC_TYPES as $k => $t) echo '<a class="btn sm ghost" href="doc_edit.php?type=' . $k . '">New ' . h(strtolower($t['label'])) . '</a> '; endif; endif; ?></div>
+<?php if ($type ? dcan('doc.create', $admin, $type) : dcan('doc.create', $admin)): if ($type): ?><a class="btn" href="doc_edit.php?type=<?= h($type) ?>">New <?= h(strtolower($T['label'])) ?></a><?php else: foreach (DOC_TYPES as $k => $t) if (dcan('doc.create', $admin, $k)) echo '<a class="btn sm ghost" href="doc_edit.php?type=' . $k . '">New ' . h(strtolower($t['label'])) . '</a> '; endif; endif; ?></div>
 <div class="tabs"><a href="docs.php"<?= !$type ? ' class="on"' : '' ?>>All</a><?php foreach (DOC_TYPES as $k => $t) echo '<a href="docs.php?type=' . $k . '"' . ($type === $k ? ' class="on"' : '') . '>' . h($t['plural']) . '</a>'; ?></div>
 <form class="filters" method="get"><input type="hidden" name="type" value="<?= h($type) ?>">
   <label>Search<input name="q" value="<?= h($f['q']) ?>" placeholder="Number, customer, reference"></label>

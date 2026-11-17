@@ -7,11 +7,11 @@ if (!isset(DOC_TYPES[$type])) { http_response_code(404); exit('Unknown document 
 $GLOBALS['nav_type'] = $type; $T = DOC_TYPES[$type];
 $existing = null;
 if ($id) {
-    if (!dcan('doc.view', $admin)) doc_need('doc.view');
+    if (!dcan('doc.view', $admin, $type)) doc_need('doc.view', $type);
     $existing = get_document($pdo, $id);
     if (!$existing || $existing['doc_type'] !== $type) { http_response_code(404); exit('Document not found.'); }
     if ($why = edit_block_reason($admin, $existing)) { flash($why, 'bad'); redirect('doc.php?id=' . $id); }
-} elseif (!dcan('doc.create', $admin)) doc_need('doc.create');
+} elseif (!dcan('doc.create', $admin, $type)) doc_need('doc.create', $type);
 
 $errors = []; $in = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -86,7 +86,7 @@ dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:
 <?php if ($isPosted): ?><div class="card"><label>Reason for changing this posted document *<input name="edit_reason" maxlength="400" value="<?= $v('edit_reason') ?>" required><?= $e('edit_reason') ?></label></div><?php endif; ?>
 <div class="card row noprint"><button class="btn" name="action" value="save">Save <?= $isPosted ? 'changes' : 'as draft' ?></button>
   <button class="btn ghost" name="action" value="preview" formaction="doc_preview.php" formtarget="_blank">Preview</button>
-  <?php if (!$isPosted && dcan('doc.post', $admin)): ?><button class="btn green" name="action" value="post" data-confirm="Save and post this <?= h(strtolower($T['label'])) ?>? Once posted it is locked.">Save and post</button><?php endif; ?>
+  <?php if (!$isPosted && dcan('doc.post', $admin, $type)): ?><button class="btn green" name="action" value="post" data-confirm="Save and post this <?= h(strtolower($T['label'])) ?>? Once posted it is locked.">Save and post</button><?php endif; ?>
   <a class="btn ghost" href="<?= $existing ? 'doc.php?id=' . $id : 'docs.php?type=' . h($type) ?>">Cancel</a></div>
 </form>
 <script src="doc-editor.js"></script>
