@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!isset(RFQ_TARGETS[$type])) redirect('rfq.php?kind=' . $kind . '&id=' . $id);
         doc_need('doc.create', $type);
         $cid = capture_customer($pdo, ['name' => $r['name'], 'contact_person' => $r['contact'], 'tin' => $r['tin'], 'address' => $r['location'], 'phone' => $r['phone'], 'email' => $r['email'], 'note' => 'Registered from ' . $r['ref'] . '.']);
+        if (!$cid) flash('The client could not be saved as a customer automatically (' . ($GLOBALS['capture_customer_error'] ?? 'unknown reason') . '). Their details are filled in below: register them with one click.', 'bad');
         rfq_event($pdo, $kind, $id, (int) $admin['id'], 'note', 'Started a ' . strtolower(DOC_TYPES[$type]['label']) . ' from this request');
         $open = $kind === 'quote' ? ['pending'] : ['new'];
         if (in_array($r['status'], $open, true)) {

@@ -2,6 +2,7 @@
 require __DIR__ . '/inc/boot.php';
 require_once __DIR__ . '/inc/docs.php';
 require_once __DIR__ . '/inc/rfq.php';
+require_once dirname(__DIR__) . '/api/lib/customers.php';
 $admin = require_login(); $pdo = db();
 $type = (string) ($_GET['type'] ?? $_POST['type'] ?? ''); $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 if (!isset(DOC_TYPES[$type])) { http_response_code(404); exit('Unknown document type.'); }
@@ -14,7 +15,7 @@ if ($id) {
     if ($why = edit_block_reason($admin, $existing)) { flash($why, 'bad'); redirect('doc.php?id=' . $id); }
 } elseif (!dcan('doc.create', $admin, $type)) doc_need('doc.create', $type);
 
-$errors = []; $in = null;
+$errors = []; $in = null; $rfqCustErr = null;
 $rfqRef = (string) ($_GET['rfq'] ?? $_POST['rfq'] ?? ''); $rfq = null;       // "quote:12" or "request:5": the request this document answers
 if (!$existing && preg_match('/^(quote|request):(\d+)$/', $rfqRef, $m) && rfq_can_view($m[1])) $rfq = rfq_load($pdo, $m[1], (int) $m[2]);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,7 +42,10 @@ if ($in === null) {
         $days = $type === 'invoice' ? INVOICE_DUE_DAYS : (int) doc_setting('quote_valid_days', '30');
         $in = ['customer_id' => (int) ($_GET['customer_id'] ?? 0), 'doc_date' => $today, 'due_date' => $T['due'] !== '' ? (new DateTime($today))->modify("+$days days")->format('Y-m-d') : '', 'currency' => doc_setting('default_currency', 'UGX'), 'salesperson' => $admin['full_name'], 'reference_text' => '', 'payment_method' => '', 'payment_ref' => '', 'parent_id' => (int) ($_GET['parent_id'] ?? 0), 'notes' => '', 'terms' => doc_setting('terms_default'), 'version' => 0, 'amount' => '', 'lines' => [['description' => '', 'quantity' => '1']]];
         if ($rfq) {   // start from the request: customer, reference and one line describing what was asked for
-            $in['reference_text'] = $rfq['ref']; if (!$in['customer_id'] && $rfq['kind'] === 'quote') { /* customer comes from rfq.php */ }
+            $in['reference_text'] = $rfq['ref']; if (!$in['customer_id']) {      // normally rfq.php has registered the client already; try again here if not
+                $in['customer_id'] = (int) capture_customer($pdo, ['name' => $rfq['name'], 'contact_person' => $rfq['contact'], 'tin' => $rfq['tin'], 'address' => $rfq['location'], 'phone' => $rfq['phone'], 'email' => $rfq['email'], 'note' => 'Registered from ' . $rfq['ref'] . '.']);
+                if (!$in['customer_id']) $rfqCustErr = (string) ($GLOBALS['capture_customer_error'] ?? '');
+            }
             $in['lines'] = [['description' => $rfq['title'] . ($rfq['summary'] !== '' ? ': ' . $rfq['summary'] : ''), 'quantity' => '1']];
         }
     }
@@ -70,6 +74,9 @@ dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:
   <div class="cust-pick"><label <?= $cust ? 'hidden' : '' ?>>Search customers by name, TIN, phone or email<input type="search" id="cust-q" placeholder="Start typing..."></label><div class="ac" id="cust-ac" hidden></div>
     <div class="cust-card" id="cust-card" <?= $cust ? '' : 'hidden' ?>></div></div>
   <?= $e('customer_id') ?>
+  <?php if ($rfq && $rfqCustErr !== null && !$cust): $q = http_build_query(['edit' => 'new', 'name' => $rfq['name'], 'contact_person' => $rfq['contact'], 'tin' => $rfq['tin'], 'phone' => $rfq['phone'], 'email' => $rfq['email'], 'address' => $rfq['location']]); ?>
+  <div class="flash bad" style="margin-top:10px">The client from <?= h($rfq['ref']) ?> could not be registered automatically<?= $rfqCustErr !== '' ? ' (' . h($rfqCustErr) . ')' : '' ?>.<br><b><?= h($rfq['name']) ?></b> &middot; <?= h($rfq['email']) ?> &middot; <?= h($rfq['phone']) ?><br><a href="customers.php?<?= h($q) ?>" target="_blank" rel="noopener">Register this client now</a> (details are filled in), then search for them above.</div>
+  <?php endif; ?>
   <?php if (dcan('customer.add', $admin)): ?><p class="muted" style="margin:8px 0 0">Not listed? <a href="customers.php?edit=new" target="_blank" rel="noopener">Register the customer</a> in a new tab, then search again.</p><?php endif; ?>
 </div>
 <div class="card"><h2>Details</h2><div class="cols3">

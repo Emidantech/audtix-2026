@@ -9,9 +9,10 @@ declare(strict_types=1);
  * @return int|null customer id (existing or new), or null when nothing could be saved
  */
 function capture_customer(PDO $pdo, array $c): ?int {
+    $GLOBALS['capture_customer_error'] = '';
     try {
         $name = mb_substr(trim((string) ($c['name'] ?? '')), 0, 190);
-        if (mb_strlen($name) < 2) return null;
+        if (mb_strlen($name) < 2) { $GLOBALS['capture_customer_error'] = 'the client name is missing'; return null; }
         $contact = mb_substr(trim((string) ($c['contact_person'] ?? '')), 0, 190);
         if (strcasecmp($contact, $name) === 0) $contact = '';
         $tin = preg_replace('/\s+/', '', (string) ($c['tin'] ?? ''));
@@ -24,8 +25,6 @@ function capture_customer(PDO $pdo, array $c): ?int {
         $id = 0; $row = null;
         $find = function (string $sql, array $args) use ($pdo): ?array { $s = $pdo->prepare($sql); $s->execute($args); return $s->fetch() ?: null; };
         if ($tin !== '') $row = $find('SELECT * FROM customers WHERE tin = ? ORDER BY id LIMIT 1', [$tin]);
-        if (!$row && $email !== '') $row = $find('SELECT * FROM customers WHERE LOWER(email) = ? AND LOWER(name) = ? ORDER BY id LIMIT 1', [$email, mb_strtolower($name)]);
-        if (!$row && $email !== '') $row = $find('SELECT * FROM customers WHERE LOWER(email) = ? ORDER BY id LIMIT 1', [$email]);
         if (!$row) $row = $find('SELECT * FROM customers WHERE LOWER(name) = ? ORDER BY id LIMIT 1', [mb_strtolower($name)]);
 
         if ($row) {                                   // already registered: only fill in what is still empty, never overwrite
@@ -44,5 +43,5 @@ function capture_customer(PDO $pdo, array $c): ?int {
         $pdo->prepare('INSERT INTO customers (name, contact_person, tin, address, phone, email, logo_file, notes, is_active, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,NULL,?,1,NULL,?,?)')
             ->execute([$name, $contact ?: null, $tin ?: null, $address ?: null, $phone ?: null, $email ?: null, mb_substr((string) ($c['note'] ?? 'Registered automatically from a website request.'), 0, 1000), $now, $now]);
         return (int) $pdo->lastInsertId();
-    } catch (Throwable $e) { error_log('capture_customer: ' . $e->getMessage()); return null; }
+    } catch (Throwable $e) { error_log('capture_customer: ' . $e->getMessage()); $GLOBALS['capture_customer_error'] = $e->getMessage(); return null; }
 }

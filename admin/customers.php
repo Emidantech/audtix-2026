@@ -10,6 +10,16 @@ $errors = []; $in = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int) ($_POST['id'] ?? 0); $act = $_POST['action'] ?? 'save';
     if (!($id ? $canManage : $canAdd)) doc_need($id ? 'customer.manage' : 'customer.add');
+    if ($act === 'import_rfq') {
+        require_once dirname(__DIR__) . '/api/lib/customers.php'; $n = 0; $fail = 0; $before = (int) $pdo->query('SELECT COUNT(*) FROM customers')->fetchColumn();
+        foreach ($pdo->query('SELECT quote_no, client_name, company, email, phone, location FROM quotes')->fetchAll() as $q)
+            capture_customer($pdo, ['name' => (string) ($q['company'] ?: $q['client_name']), 'contact_person' => $q['company'] ? (string) $q['client_name'] : '', 'address' => (string) $q['location'], 'phone' => (string) $q['phone'], 'email' => (string) $q['email'], 'note' => 'Registered from quotation request ' . $q['quote_no'] . '.']) ? $n++ : $fail++;
+        foreach ($pdo->query('SELECT request_id, client_name, contact_person, email, phone, data_json FROM requests')->fetchAll() as $r) { $dj = json_decode((string) $r['data_json'], true) ?: [];
+            capture_customer($pdo, ['name' => (string) $r['client_name'], 'contact_person' => (string) $r['contact_person'], 'tin' => (string) ($dj['tin'] ?? ''), 'address' => (string) ($dj['location'] ?? ''), 'phone' => (string) $r['phone'], 'email' => (string) $r['email'], 'note' => 'Registered from request ' . $r['request_id'] . '.']) ? $n++ : $fail++; }
+        $after = (int) $pdo->query('SELECT COUNT(*) FROM customers')->fetchColumn();
+        log_activity((int) $admin['id'], 'customers_imported', '', ($after - $before) . ' new');
+        flash(($after - $before) . ' new customer(s) added from ' . ($n + $fail) . ' website requests' . ($fail ? ' (' . $fail . ' could not be read: ' . ($GLOBALS['capture_customer_error'] ?? '') . ')' : '') . '.', $fail ? 'bad' : 'ok'); redirect('customers.php');
+    }
     if ($act === 'toggle' && $id) {
         $pdo->prepare('UPDATE customers SET is_active = 1 - is_active, updated_at = ? WHERE id = ?')->execute([now(), $id]);
         log_activity((int) $admin['id'], 'customer_toggle', (string) $id); flash('Customer updated.'); redirect('customers.php?id=' . $id);
@@ -36,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_GET['edit'] = $id ?: 'new';
 }
 
+if (($_GET['edit'] ?? '') === 'new' && $_SERVER['REQUEST_METHOD'] !== 'POST') {   // prefill from a request (links from the document editor)
+    foreach (['name' => 190, 'contact_person' => 190, 'tin' => 20, 'phone' => 60, 'email' => 190, 'address' => 500] as $k => $m) if (isset($_GET[$k]) && is_string($_GET[$k])) $in[$k] = mb_substr(trim($_GET[$k]), 0, $m);
+}
 $edit = $_GET['edit'] ?? null; $viewId = (int) ($_GET['id'] ?? 0);
 if ($edit !== null && ($canManage || ($canAdd && $edit === 'new'))) {
     $c = ['id' => 0, 'name' => '', 'contact_person' => '', 'tin' => '', 'address' => '', 'phone' => '', 'email' => '', 'notes' => '', 'logo_file' => null, 'is_active' => 1];
@@ -90,7 +103,7 @@ $cn = $pdo->prepare("SELECT COUNT(*) FROM customers c $w"); $cn->execute($a); $t
 $rs = $pdo->prepare("SELECT c.*, (SELECT COUNT(*) FROM documents d WHERE d.customer_id = c.id) AS docs FROM customers c $w ORDER BY c.name LIMIT $per OFFSET " . (($page - 1) * $per)); $rs->execute($a); $rows = $rs->fetchAll();
 dm_head('Customers', $admin, 'customers');
 ?>
-<div class="hdr"><h1>Customers</h1><span class="spacer"></span><?php if ($canAdd): ?><a class="btn" href="?edit=new">Register a customer</a><?php endif; ?></div>
+<div class="hdr"><h1>Customers</h1><span class="spacer"></span><?php if ($canAdd): ?><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="import_rfq"><button class="btn ghost" data-confirm="Add every client from the website quotation, tax and audit requests who is not a customer yet? Existing customers are not changed.">Import from requests</button></form> <a class="btn" href="?edit=new">Register a customer</a><?php endif; ?></div>
 <p class="muted">Pick a customer once and their details and logo fill in on every document.</p>
 <form class="filters" method="get"><label>Search<input name="q" value="<?= h($q) ?>" placeholder="Name, TIN, email, phone"></label><label>Show<select name="show"><option value="">Active</option><option value="off"<?= !$show ? ' selected' : '' ?>>Switched off</option></select></label><button class="btn">Filter</button></form>
 <div class="card tablewrap" style="padding:0"><table><thead><tr><th></th><th>Customer</th><th>TIN</th><th>Contact</th><th class="num">Documents</th></tr></thead><tbody>
