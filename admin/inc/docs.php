@@ -350,6 +350,7 @@ function post_document(PDO $pdo, array $admin, int $id): array {
         if ($u->rowCount() !== 1) { $pdo->rollBack(); return ['ok' => false, 'error' => 'This document was changed by someone else.']; }
         doc_event($pdo, $id, (int) $admin['id'], 'posted', 'Posted by ' . $admin['full_name']);
         $pdo->commit(); log_activity((int) $admin['id'], 'document_posted', $d['doc_no']);
+        $d['status'] = 'posted'; rfq_mark_responded($pdo, $d, (int) $admin['id']);
         return ['ok' => true];
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('post_document: ' . $e->getMessage()); return ['ok' => false, 'error' => 'Could not post the document.']; }
 }
@@ -433,6 +434,9 @@ function period_range(string $p, string $from = '', string $to = ''): array {
         case 'week':    $s = (clone $now)->modify('monday this week'); $e = (clone $s)->modify('+6 days'); return [$s->format('Y-m-d'), $e->format('Y-m-d'), 'This week'];
         case 'quarter': $qs = intdiv($m - 1, 3) * 3 + 1; $s = new DateTime(sprintf('%d-%02d-01', $y, $qs)); $e = (clone $s)->modify('+3 months -1 day'); return [$s->format('Y-m-d'), $e->format('Y-m-d'), 'This quarter'];
         case 'year':    return ["$y-01-01", "$y-12-31", 'This year'];
+        case 'lastmonth':   $s = new DateTime(sprintf('%d-%02d-01', $y, $m)); $s->modify('-1 month'); $e = (clone $s)->modify('+1 month -1 day'); return [$s->format('Y-m-d'), $e->format('Y-m-d'), 'Last month'];
+        case 'lastquarter': $qs = intdiv($m - 1, 3) * 3 + 1; $s = new DateTime(sprintf('%d-%02d-01', $y, $qs)); $s->modify('-3 months'); $e = (clone $s)->modify('+3 months -1 day'); return [$s->format('Y-m-d'), $e->format('Y-m-d'), 'Last quarter'];
+        case 'lastyear':    return [($y - 1) . '-01-01', ($y - 1) . '-12-31', 'Last year'];
         case 'custom':  $f = valid_date($from) ? $from : "$y-01-01"; $t = valid_date($to) ? $to : $now->format('Y-m-d'); if ($t < $f) [$f, $t] = [$t, $f]; return [$f, $t, 'Custom range'];
         default:        $s = new DateTime(sprintf('%d-%02d-01', $y, $m)); $e = (clone $s)->modify('+1 month -1 day'); return [$s->format('Y-m-d'), $e->format('Y-m-d'), 'This month'];
     }
@@ -466,6 +470,43 @@ function company_lines(): array {
     return array_values(array_filter([doc_setting('company_address'), trim(doc_setting('company_phone') . '   ' . doc_setting('company_email')), doc_setting('company_web'), doc_setting('company_tin') ? 'TIN: ' . doc_setting('company_tin') : '']));
 }
 function logo_url(?string $f): string { return $f && preg_match('/^[a-f0-9]{24}\.png$/', $f) ? 'logo.php?f=' . $f : ''; }
+
+/* ===================== keeping requests (RFQs) up to date ===================== */
+/** A posted quotation / proforma / invoice that carries an RFQ's reference moves that RFQ along:
+    quotation or proforma posted = Responded (Quoted for tax/audit requests); invoice posted = Won (In progress for tax/audit). */
+function rfq_mark_responded(PDO $pdo, array $d, ?int $adminId): void {
+    if (!in_array($d['doc_type'], ['quotation', 'proforma', 'invoice'], true) || $d['status'] !== 'posted') return;
+    $ref = trim((string) ($d['reference_text'] ?? '')); if ($ref === '') return;
+    $won = $d['doc_type'] === 'invoice'; $label = DOC_TYPES[$d['doc_type']]['label'] . ' ' . $d['doc_no'];
+    try {
+        $s = $pdo->prepare('SELECT id, status, quoted_amount FROM quotes WHERE quote_no = ?'); $s->execute([$ref]);
+        if ($q = $s->fetch()) {
+            $new = $won ? 'approved' : 'responded';
+            if (($won && in_array($q['status'], ['pending', 'in_review', 'responded'], true)) || (!$won && in_array($q['status'], ['pending', 'in_review'], true))) {
+                $pdo->prepare('UPDATE quotes SET status = ?, quoted_amount = COALESCE(quoted_amount, ?), currency = COALESCE(currency, ?), valid_until = COALESCE(valid_until, ?), responded_at = COALESCE(responded_at, ?), responded_by = COALESCE(responded_by, ?), updated_at = ? WHERE id = ?')
+                    ->execute([$new, $d['total'], $d['currency'], $d['due_date'] ?: null, now(), $adminId, now(), $q['id']]);
+                quote_event($pdo, (int) $q['id'], $adminId, 'status', $label . ' was posted: request marked as ' . QUOTE_STATUSES[$new]);
+            }
+            return;
+        }
+        $s = $pdo->prepare('SELECT id, status FROM requests WHERE request_id = ?'); $s->execute([$ref]);
+        if ($r = $s->fetch()) {
+            $new = $won ? 'in_progress' : 'quoted';
+            if (in_array($r['status'], $won ? ['new', 'in_review', 'awaiting_client', 'quoted'] : ['new', 'in_review', 'awaiting_client'], true)) {
+                $pdo->prepare('UPDATE requests SET status = ?, updated_at = ? WHERE id = ?')->execute([$new, now(), $r['id']]);
+                $pdo->prepare('INSERT INTO request_events (request_pk, admin_id, event_type, note, created_at) VALUES (?,?,?,?,?)')->execute([$r['id'], $adminId, 'status', $label . ' was posted: request marked as ' . (STATUSES[$new] ?? $new), now()]);
+            }
+        }
+    } catch (Throwable $e) { error_log('rfq_mark_responded: ' . $e->getMessage()); }
+}
+/** Brings older RFQs in line with documents posted before this existed (safe to run any time). */
+function rfq_sync_all(PDO $pdo): void {
+    try {
+        $rows = $pdo->query("SELECT d.* FROM documents d WHERE d.status = 'posted' AND d.doc_type IN ('quotation','proforma','invoice') AND d.reference_text IS NOT NULL AND d.reference_text <> ''
+            AND (EXISTS (SELECT 1 FROM quotes q WHERE q.quote_no = d.reference_text AND q.status IN ('pending','in_review','responded')) OR EXISTS (SELECT 1 FROM requests r WHERE r.request_id = d.reference_text AND r.status IN ('new','in_review','awaiting_client','quoted'))) ORDER BY d.id LIMIT 200")->fetchAll();
+        foreach ($rows as $d) rfq_mark_responded($pdo, $d, $d['posted_by'] ? (int) $d['posted_by'] : null);
+    } catch (Throwable $e) { error_log('rfq_sync_all: ' . $e->getMessage()); }
+}
 
 /* ===================== service picker for document lines ===================== */
 /** Audtix's own services, as shown on the website; offered first in the line-item dropdown. */

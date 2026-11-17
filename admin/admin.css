@@ -87,3 +87,30 @@ form[data-rules] fieldset { border: 0; padding: 0; margin: 0; }
   .info-box .info-box-text{font-size:.74rem;white-space:normal}
   .info-box .info-box-number{font-size:1rem;margin-top:2px}
 }
+
+/* ---- Dashboard polish (looks only; no behaviour changes) ---- */
+.dash-hero{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding:18px 22px;border-radius:16px;color:#fff;background:linear-gradient(120deg,#0B2A55 0%,#1664C0 62%,#2D8CF0 100%);box-shadow:0 8px 24px rgba(22,100,192,.22);position:relative;overflow:hidden}
+.dash-hero::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08)}
+.dash-hero .dh-hi{font-size:1.35rem;font-weight:700;letter-spacing:.01em}.dash-hero .dh-sub{opacity:.85;font-size:.9rem;margin-top:2px}
+.dash-hero .dh-act{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.app-content .card{border:0;border-radius:14px;box-shadow:0 2px 14px rgba(12,35,64,.07)}
+.app-content .card-header{background:transparent;border-bottom:1px solid rgba(12,35,64,.07);padding:14px 18px}
+.app-content .card-title{font-weight:700;font-size:1rem}
+.app-content .table thead th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:#6B7A8D;font-weight:700;border-bottom-width:1px;background:#F7F9FC}
+.app-content .table td{vertical-align:middle;padding-top:.7rem;padding-bottom:.7rem}
+.app-content .table-hover>tbody>tr:hover>*{--bs-table-bg-state:#F1F6FD}
+.small-box{border-radius:14px;box-shadow:0 6px 18px rgba(12,35,64,.12);overflow:hidden;transition:transform .15s,box-shadow .15s}
+.small-box:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(12,35,64,.18)}
+.info-box{border:0;border-radius:14px;box-shadow:0 2px 14px rgba(12,35,64,.07);transition:transform .15s}
+.info-box:hover{transform:translateY(-1px)}
+.info-box .info-box-icon{border-radius:12px;margin:8px 0 8px 8px;height:auto;min-height:48px;width:52px}
+.info-box .info-box-text{color:#5B6B7F;font-size:.82rem}.info-box .info-box-number{font-size:1.3rem;font-weight:800;color:#10202F}
+.qa-tile{border-radius:14px;border:0;box-shadow:0 2px 12px rgba(12,35,64,.08)}
+.qa-ico{background:linear-gradient(135deg,#1664C0,#2D8CF0);color:#fff}
+.svc-table .svc-bar{height:4px;border-radius:4px;background:#E8EEF7;margin-top:6px;max-width:260px;overflow:hidden}.svc-table .svc-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#1664C0,#5AB0FF)}
+.trend{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;height:150px}
+.trend .tcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.trend .tn{font-size:.75rem;font-weight:700;color:#10202F}.trend .tl{font-size:.72rem;color:#6B7A8D}
+.trend .tbar{flex:1;width:100%;display:flex;align-items:flex-end;background:#F1F5FA;border-radius:8px;overflow:hidden}.trend .tbar i{display:block;width:100%;border-radius:8px 8px 0 0;background:linear-gradient(180deg,#2D8CF0,#1664C0);min-height:3px}
+@media (max-width:575.98px){.dash-hero{padding:14px 16px}.dash-hero .dh-hi{font-size:1.15rem}}
+.app-content .card{margin-bottom:16px}.app-content .info-box{margin-bottom:0}

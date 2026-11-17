@@ -5,13 +5,15 @@ declare(strict_types=1);
 function report_types(): array {
     $r = []; foreach (DOC_TYPES as $k => $t) if (dcan('doc.view', null, $k)) $r[$k] = $t['label'] . ' report';
     $r['customers'] = 'Customer transaction report'; $r['products'] = 'Products and services transaction report';
+    if (can('quotes.view')) { $r['rfq'] = 'Quotation requests by service (RFQ summary)'; $r['rfq_list'] = 'Quotation requests list (RFQs)'; }
+    if (can('requests.view')) $r['requests'] = 'Tax and audit requests report';
     return $r;
 }
 function cur_totals(array $m, bool $signed = false): string { ksort($m); $o = []; foreach ($m as $cu => $v) $o[] = ($v < 0 ? '-' : '') . dmoney(abs($v), $cu) . ' ' . $cu; return $o ? implode(' / ', $o) : '0'; }
 
 /** @return array{title:string,columns:array,rows:array,summary:array,period:string,filters:string} */
 function build_report(PDO $pdo, array $p): array {
-    $types = report_types(); $kind = isset($types[$p['report']]) ? $p['report'] : 'invoice';
+    $types = report_types(); $kind = isset($types[$p['report']]) ? $p['report'] : (string) array_key_first($types);
     [$from, $to, $plabel] = period_range((string) $p['period'], (string) ($p['from'] ?? ''), (string) ($p['to'] ?? ''));
     $f = ['from' => $from, 'to' => $to, 'customer_id' => (int) ($p['customer_id'] ?? 0), 'created_by' => (int) ($p['created_by'] ?? 0), 'q' => trim((string) ($p['q'] ?? '')), 'status' => (string) ($p['status'] ?? '')];
     $fl = []; if ($f['customer_id']) { $s = $pdo->prepare('SELECT name FROM customers WHERE id = ?'); $s->execute([$f['customer_id']]); if ($n = $s->fetchColumn()) $fl[] = 'Customer: ' . $n; }
@@ -19,6 +21,7 @@ function build_report(PDO $pdo, array $p): array {
     if ($f['created_by']) { $s = $pdo->prepare('SELECT full_name FROM admins WHERE id = ?'); $s->execute([$f['created_by']]); if ($n = $s->fetchColumn()) $fl[] = 'Created by: ' . $n; }
     $out = ['title' => $types[$kind], 'period' => $plabel . ': ' . fmt_date($from) . ' to ' . fmt_date($to), 'filters' => implode('  |  ', $fl), 'columns' => [], 'rows' => [], 'summary' => [], 'from' => $from, 'to' => $to];
 
+    if (in_array($kind, ['rfq', 'rfq_list', 'requests'], true)) { rfq_sync_all($pdo); return build_rfq_report($pdo, $kind, $out, $from, $to, (string) $f['status'], (string) $f['q']); }
     if (isset(DOC_TYPES[$kind])) {
         $res = list_documents($pdo, $f + ['type' => $kind], 1, 5000);
         $cols = [['Number', 'no', 't', 92], ['Date', 'date', 't', 70], ['Customer', 'customer', 't', 150], ['Reference', 'ref', 't', 100], ['Status', 'status', 't', 56], ['Cur', 'cur', 't', 30], ['Subtotal', 'sub', 'm', 76], ['Discount', 'disc', 'm', 64], ['Tax', 'tax', 'm', 64], ['Total', 'total', 'm', 80]];
@@ -100,4 +103,53 @@ function report_pdf(array $r): string {
     }
     if (!$r['rows']) $p->text($M, $y + 18, 'No records for these filters.', 9, false, $mut);
     return $p->output();
+}
+
+
+/** Request (RFQ) reports. Dates are East Africa Time days; received = when the request came in. */
+function build_rfq_report(PDO $pdo, string $kind, array $out, string $from, string $to, string $status, string $q): array {
+    $tz = new DateTimeZone('Africa/Kampala'); $utc = new DateTimeZone('UTC');
+    $a = (new DateTime($from . ' 00:00:00', $tz))->setTimezone($utc)->format('Y-m-d H:i:s'); $b = (new DateTime($to . ' 23:59:59', $tz))->setTimezone($utc)->format('Y-m-d H:i:s');
+    $loc = fn($v) => $v ? (new DateTime((string) $v, $utc))->setTimezone($tz)->format('j M Y H:i') : '';
+    if ($kind === 'requests') {
+        $w = 'created_at >= ? AND created_at <= ?'; $args = [$a, $b];
+        if (isset(STATUSES[$status])) { $w .= ' AND status = ?'; $args[] = $status; }
+        if ($q !== '') { $w .= ' AND (request_id LIKE ? OR client_name LIKE ?)'; $args[] = "%$q%"; $args[] = "%$q%"; }
+        $s = $pdo->prepare("SELECT * FROM requests WHERE $w ORDER BY id DESC LIMIT 5000"); $s->execute($args); $cnt = []; $cat = ['tax' => 0, 'audit' => 0];
+        $out['columns'] = [['Request', 'no', 't', 92], ['Received', 'date', 't', 100], ['Type', 'type', 't', 50], ['Client', 'client', 't', 190], ['Services', 'svc', 't', 230], ['Status', 'status', 't', 90], ['Assigned', 'asg', 't', 80]];
+        $adm = []; foreach ($pdo->query('SELECT id, full_name FROM admins') as $r) $adm[(int) $r['id']] = $r['full_name'];
+        foreach ($s->fetchAll() as $r) { $cnt[$r['status']] = ($cnt[$r['status']] ?? 0) + 1; $cat[$r['category']] = ($cat[$r['category']] ?? 0) + 1;
+            $out['rows'][] = ['no' => $r['request_id'], 'date' => $loc($r['created_at']), 'type' => strtoupper($r['category']), 'client' => $r['client_name'], 'svc' => mb_strimwidth((string) $r['service_summary'], 0, 120, '...'), 'status' => STATUSES[$r['status']] ?? $r['status'], 'asg' => $adm[(int) $r['assigned_to']] ?? ''];
+        }
+        $out['summary'][] = ['Requests received', (string) count($out['rows'])]; $out['summary'][] = ['Tax / Audit', $cat['tax'] . ' / ' . $cat['audit']];
+        foreach (['new', 'in_review', 'quoted', 'in_progress', 'completed'] as $k) $out['summary'][] = [STATUSES[$k], (string) ($cnt[$k] ?? 0)];
+        return $out;
+    }
+    $w = 'created_at >= ? AND created_at <= ?'; $args = [$a, $b];
+    if (isset(QUOTE_STATUSES[$status])) { $w .= ' AND status = ?'; $args[] = $status; }
+    if ($q !== '') { $w .= ' AND (quote_no LIKE ? OR client_name LIKE ? OR company LIKE ?)'; array_push($args, "%$q%", "%$q%", "%$q%"); }
+    $s = $pdo->prepare("SELECT * FROM quotes WHERE $w ORDER BY id DESC LIMIT 5000"); $s->execute($args); $rows = $s->fetchAll();
+    if ($kind === 'rfq_list') {
+        $out['columns'] = [['Request', 'no', 't', 92], ['Received', 'date', 't', 100], ['Client', 'client', 't', 190], ['Service', 'svc', 't', 130], ['Status', 'status', 't', 70], ['Responded', 'resp', 't', 100], ['Cur', 'cur', 't', 30], ['Quoted amount', 'amt', 'm', 100]];
+        foreach ($rows as $r) $out['rows'][] = ['no' => $r['quote_no'], 'date' => $loc($r['created_at']), 'client' => (string) ($r['company'] ?: $r['client_name']), 'svc' => quote_service_title((string) $r['service']), 'status' => QUOTE_STATUSES[$r['status']] ?? $r['status'], 'resp' => $loc($r['responded_at']), 'cur' => (string) ($r['currency'] ?: 'UGX'), 'amt' => $r['quoted_amount'] !== null ? db_cents($r['quoted_amount']) : 0];
+    } else {
+        $g = []; foreach (quote_services() as $k => $sv) $g[$k] = ['svc' => $sv['title'], 'recv' => 0, 'open' => 0, 'resp' => 0, 'won' => 0, 'lost' => 0, 'canc' => 0, 'rate' => '', 'cur' => 'UGX', 'val' => 0];
+        $hrs = []; $wonv = [];
+        foreach ($rows as $r) { $k = $r['service']; $g[$k] ??= ['svc' => quote_service_title($k), 'recv' => 0, 'open' => 0, 'resp' => 0, 'won' => 0, 'lost' => 0, 'canc' => 0, 'rate' => '', 'cur' => 'UGX', 'val' => 0];
+            $g[$k]['recv']++; $st = $r['status'];
+            if (in_array($st, ['pending', 'in_review'], true)) $g[$k]['open']++; elseif ($st === 'responded') $g[$k]['resp']++; elseif (in_array($st, ['approved', 'completed'], true)) { $g[$k]['won']++; if (($r['currency'] ?: 'UGX') === 'UGX') $g[$k]['val'] += db_cents($r['quoted_amount']); else $wonv[$r['currency']] = ($wonv[$r['currency']] ?? 0) + db_cents($r['quoted_amount']); } elseif ($st === 'rejected') $g[$k]['lost']++; else $g[$k]['canc']++;
+            if ($r['responded_at']) $hrs[] = (strtotime((string) $r['responded_at'] . ' UTC') - strtotime((string) $r['created_at'] . ' UTC')) / 3600;
+        }
+        $tot = ['recv' => 0, 'open' => 0, 'resp' => 0, 'won' => 0, 'lost' => 0, 'canc' => 0, 'val' => 0];
+        foreach ($g as &$x) { $dec = $x['won'] + $x['lost']; $x['rate'] = $dec ? round($x['won'] / $dec * 100) . '%' : '-'; foreach ($tot as $k => $_) $tot[$k] += $x[$k]; } unset($x);
+        $out['columns'] = [['Service', 'svc', 't', 190], ['Received', 'recv', 'n', 62], ['Open', 'open', 'n', 50], ['Responded', 'resp', 'n', 62], ['Won', 'won', 'n', 46], ['Declined', 'lost', 'n', 56], ['Cancelled', 'canc', 'n', 58], ['Win rate', 'rate', 't', 56], ['Cur', 'cur', 't', 30], ['Value won', 'val', 'm', 110]];
+        $out['rows'] = array_values($g);
+        $dec = $tot['won'] + $tot['lost']; $out['summary'][] = ['Requests received', (string) $tot['recv']]; $out['summary'][] = ['Open / Responded', $tot['open'] . ' / ' . $tot['resp']]; $out['summary'][] = ['Won / Declined', $tot['won'] . ' / ' . $tot['lost']];
+        $out['summary'][] = ['Win rate (decided)', $dec ? round($tot['won'] / $dec * 100) . '%' : '-']; $out['summary'][] = ['Average time to respond', $hrs ? (round(array_sum($hrs) / count($hrs), 1)) . ' hours' : '-'];
+        $out['summary'][] = ['Value won', cur_totals(['UGX' => $tot['val']] + $wonv)];
+        return $out;
+    }
+    $cn = []; foreach ($rows as $r) $cn[$r['status']] = ($cn[$r['status']] ?? 0) + 1;
+    $out['summary'][] = ['Requests received', (string) count($rows)]; foreach (['pending', 'in_review', 'responded', 'approved', 'rejected'] as $k) $out['summary'][] = [QUOTE_STATUSES[$k], (string) ($cn[$k] ?? 0)];
+    return $out;
 }
