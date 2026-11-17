@@ -135,7 +135,7 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
     }
 
     $vis = function_exists('doc_types_for') ? doc_types_for('doc.view') : [];
-    if ($vis || can('customers.view') || can('items.view') || can('doc_reports.view')) {
+    if ($vis || can('customers.view') || can('items.view') || can('doc_reports.view') || can('quotes.view') || can('requests.view')) {
         $dc = $c['docs'];
         echo '<li class="nav-header">BUSINESS DOCUMENTS</li>';
         if ($vis) {
@@ -145,7 +145,7 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         }
         if (can('customers.view')) echo nav_link('customers.php', 'building', 'Customers', $sec === 'customers', count_badge((int) ($dc['_customers'] ?? 0)));
         if (can('items.view')) echo nav_link('items.php', 'box-seam', 'Products & services', $sec === 'items', count_badge((int) ($dc['_items'] ?? 0)));
-        if (can('doc_reports.view')) echo nav_link('reports.php', 'bar-chart-line', 'Document reports', $sec === 'doc_reports');
+        if (can('doc_reports.view') || can('quotes.view') || can('requests.view')) echo nav_link('reports.php', 'bar-chart-line', 'Reports', $sec === 'doc_reports');
     }
 
     if (can('posts.view') || can('post_types.view') || can('media.view')) {

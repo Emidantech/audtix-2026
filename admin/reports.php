@@ -5,8 +5,10 @@ require_once __DIR__ . '/inc/pdf.php';
 require_once __DIR__ . '/inc/xlsx.php';
 require_once __DIR__ . '/inc/render.php';
 require_once __DIR__ . '/inc/reports.php';
-$admin = doc_need('report.view'); $pdo = db();
+$admin = require_login(); $pdo = db();
+if (!dcan('report.view', $admin) && !can('quotes.view') && !can('requests.view')) doc_need('report.view');
 $p = ['report' => $_GET['report'] ?? 'invoice', 'period' => $_GET['period'] ?? 'month', 'from' => $_GET['from'] ?? '', 'to' => $_GET['to'] ?? '', 'customer_id' => (int) ($_GET['customer_id'] ?? 0), 'status' => $_GET['status'] ?? '', 'q' => $_GET['q'] ?? '', 'created_by' => (int) ($_GET['created_by'] ?? 0), 'doc_type' => $_GET['doc_type'] ?? 'invoice'];
+$types = report_types(); if (!isset($types[$p['report']])) $p['report'] = (string) array_key_first($types);
 $rep = build_report($pdo, $p);
 $exp = $_GET['export'] ?? '';
 if ($exp === 'pdf' || $exp === 'xlsx') {
@@ -24,11 +26,12 @@ dm_head('Reports', $admin, 'doc_reports');
 <div class="hdr"><h1>Reports</h1><span class="spacer"></span><a class="btn ghost" href="?<?= h($qs) ?>&export=xlsx">Export Excel</a><a class="btn" href="?<?= h($qs) ?>&export=pdf">Export PDF</a></div>
 <form class="filters card" method="get">
   <label>Report<select name="report"><?php foreach (report_types() as $k => $l) echo '<option value="' . $k . '"' . ($p['report'] === $k ? ' selected' : '') . '>' . h($l) . '</option>'; ?></select></label>
-  <label>Period<select name="period"><?php foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month', 'quarter' => 'This quarter', 'year' => 'This year', 'custom' => 'Custom range'] as $k => $l) echo '<option value="' . $k . '"' . ($p['period'] === $k ? ' selected' : '') . '>' . $l . '</option>'; ?></select></label>
+  <label>Period<select name="period"><?php foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month', 'lastmonth' => 'Last month', 'quarter' => 'This quarter', 'lastquarter' => 'Last quarter', 'year' => 'This year', 'lastyear' => 'Last year', 'custom' => 'Custom range'] as $k => $l) echo '<option value="' . $k . '"' . ($p['period'] === $k ? ' selected' : '') . '>' . $l . '</option>'; ?></select></label>
   <label>From<input type="date" name="from" value="<?= h($p['from']) ?>"></label><label>To<input type="date" name="to" value="<?= h($p['to']) ?>"></label>
-  <label>Customer<select name="customer_id"><option value="0">All</option><?php foreach ($customers as $c) echo '<option value="' . (int) $c['id'] . '"' . ($p['customer_id'] === (int) $c['id'] ? ' selected' : '') . '>' . h($c['name']) . '</option>'; ?></select></label>
-  <label>Status<select name="status"><option value="">All</option><?php foreach (['draft', 'posted', 'cancelled'] as $s) echo '<option value="' . $s . '"' . ($p['status'] === $s ? ' selected' : '') . '>' . ucfirst($s) . '</option>'; ?></select></label>
-  <label>Created by<select name="created_by"><option value="0">Anyone</option><?php foreach ($admins as $a) echo '<option value="' . (int) $a['id'] . '"' . ($p['created_by'] === (int) $a['id'] ? ' selected' : '') . '>' . h($a['full_name']) . '</option>'; ?></select></label>
+  <?php $isRfq = in_array($p['report'], ['rfq', 'rfq_list', 'requests'], true); if (!$isRfq): ?><label>Customer<select name="customer_id"><option value="0">All</option><?php foreach ($customers as $c) echo '<option value="' . (int) $c['id'] . '"' . ($p['customer_id'] === (int) $c['id'] ? ' selected' : '') . '>' . h($c['name']) . '</option>'; ?></select></label>
+  <?php endif; ?>
+  <label>Status<select name="status"><option value="">All</option><?php $sts = $p['report'] === 'requests' ? STATUSES : ($isRfq ? QUOTE_STATUSES : ['draft' => 'Draft', 'posted' => 'Posted', 'cancelled' => 'Cancelled']); foreach ($sts as $s => $lab) echo '<option value="' . $s . '"' . ($p['status'] === $s ? ' selected' : '') . '>' . h($lab) . '</option>'; ?></select></label>
+  <?php if (!$isRfq): ?><label>Created by<select name="created_by"><option value="0">Anyone</option><?php foreach ($admins as $a) echo '<option value="' . (int) $a['id'] . '"' . ($p['created_by'] === (int) $a['id'] ? ' selected' : '') . '>' . h($a['full_name']) . '</option>'; ?></select></label><?php endif; ?>
   <label>Reference no. / search<input name="q" value="<?= h($p['q']) ?>" placeholder="INV-2026-00007"></label>
   <?php if ($p['report'] === 'products'): ?><label>Document type<select name="doc_type"><option value="all">All except receipts</option><?php foreach (DOC_TYPES as $k => $t) if ($k !== 'receipt') echo '<option value="' . $k . '"' . ($p['doc_type'] === $k ? ' selected' : '') . '>' . h($t['plural']) . '</option>'; ?></select></label><?php endif; ?>
   <button class="btn">Show report</button></form>
