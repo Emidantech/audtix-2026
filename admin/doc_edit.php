@@ -38,7 +38,7 @@ if ($in === null) {
         $in = ['customer_id' => $existing['customer_id'], 'doc_date' => $existing['doc_date'], 'due_date' => $existing['due_date'], 'currency' => $existing['currency'], 'salesperson' => $existing['salesperson'], 'reference_text' => $existing['reference_text'], 'payment_method' => $existing['payment_method'], 'payment_ref' => $existing['payment_ref'], 'parent_id' => $existing['parent_id'], 'notes' => $existing['notes'], 'terms' => $existing['terms'], 'version' => $existing['version'], 'amount' => $type === 'receipt' ? rtrim(rtrim((string) $existing['total'], '0'), '.') : '',
                'lines' => array_map(fn($l) => ['item_id' => $l['item_id'], 'description' => $l['description'], 'quantity' => fmt_qty_plain($l['quantity']), 'unit' => $l['unit'], 'unit_price' => plain_num($l['unit_price']), 'discount' => plain_num($l['discount']), 'tax_rate' => plain_num($l['tax_rate'])], $existing['lines'])];
     } else {
-        $days = (int) doc_setting($type === 'invoice' ? 'invoice_due_days' : 'quote_valid_days', '30');
+        $days = $type === 'invoice' ? INVOICE_DUE_DAYS : (int) doc_setting('quote_valid_days', '30');
         $in = ['customer_id' => (int) ($_GET['customer_id'] ?? 0), 'doc_date' => $today, 'due_date' => $T['due'] !== '' ? (new DateTime($today))->modify("+$days days")->format('Y-m-d') : '', 'currency' => doc_setting('default_currency', 'UGX'), 'salesperson' => $admin['full_name'], 'reference_text' => '', 'payment_method' => '', 'payment_ref' => '', 'parent_id' => (int) ($_GET['parent_id'] ?? 0), 'notes' => '', 'terms' => doc_setting('terms_default'), 'version' => 0, 'amount' => '', 'lines' => [['description' => '', 'quantity' => '1']]];
         if ($rfq) {   // start from the request: customer, reference and one line describing what was asked for
             $in['reference_text'] = $rfq['ref']; if (!$in['customer_id'] && $rfq['kind'] === 'quote') { /* customer comes from rfq.php */ }
@@ -73,8 +73,8 @@ dm_head(($existing ? 'Edit ' : 'New ') . strtolower($T['label']), $admin, 'docs:
   <?php if (dcan('customer.add', $admin)): ?><p class="muted" style="margin:8px 0 0">Not listed? <a href="customers.php?edit=new" target="_blank" rel="noopener">Register the customer</a> in a new tab, then search again.</p><?php endif; ?>
 </div>
 <div class="card"><h2>Details</h2><div class="cols3">
-  <label>Date<input type="date" name="doc_date" value="<?= $v('doc_date') ?>" required><?= $e('doc_date') ?></label>
-  <?php if ($T['due'] !== ''): ?><label><?= h($T['due']) ?><input type="date" name="due_date" value="<?= $v('due_date') ?>"><?= $e('due_date') ?></label><?php endif; ?>
+  <label>Date<input type="date" name="doc_date" id="doc_date" value="<?= $v('doc_date') ?>" required><?= $e('doc_date') ?></label>
+  <?php if ($T['due'] !== ''): ?><label><?= h($T['due']) ?><input type="date" name="due_date" id="due_date" value="<?= $v('due_date') ?>"<?= $type === 'invoice' ? ' readonly title="Always 30 days after the invoice date"' : '' ?>><?= $type === 'invoice' ? '<span class="muted">Always 30 days after the invoice date</span>' : '' ?><?= $e('due_date') ?></label><?php endif; ?>
   <label>Currency<select name="currency" id="currency"><?php foreach (CURRENCIES as $k => $c) echo '<option value="' . $k . '"' . (($in['currency'] ?? '') === $k ? ' selected' : '') . '>' . $k . '</option>'; ?></select><?= $e('currency') ?></label>
   <?php if ($type !== 'receipt'): ?><label>Payment method (optional)<input name="payment_method" value="<?= $v('payment_method') ?>" maxlength="60" placeholder="Mobile money, bank..."></label>
   <label>Salesperson<input name="salesperson" value="<?= $v('salesperson') ?>" maxlength="120"></label>

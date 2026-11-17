@@ -23,6 +23,10 @@ const DOC_PERM_MAP = [
 ];
 const DOC_ICONS = ['requisition' => 'clipboard-check', 'quotation' => 'file-earmark-text', 'invoice' => 'receipt', 'budget' => 'piggy-bank', 'proforma' => 'file-earmark-ruled', 'receipt' => 'cash-coin'];
 const MAX_LINES = 100;
+const INVOICE_DUE_DAYS = 30;   // an invoice is always due 30 days after its date
+const TERMS_DEFAULT = 'Kindly pay by the due date shown. Prices exclude any tax not listed. Goods remain the property of Audtix Systems Ltd until paid in full. Thank you for your business.';
+const TERMS_OLD_DEFAULT = 'Payment is due by the date shown. Prices are in the currency shown and exclude any tax not listed. Goods remain the property of Audtix Systems Ltd until paid in full.';
+function invoice_due_date(string $date): string { return (new DateTime($date))->modify('+' . INVOICE_DUE_DAYS . ' days')->format('Y-m-d'); }
 
 /* ===================== permissions ===================== */
 /** True if $admin (default: the signed-in admin) holds the permission $p (for document actions, on $type or on any type). */
@@ -56,7 +60,13 @@ function doc_need(string $p, ?string $type = null): array {
 /* ===================== settings ===================== */
 function doc_settings(): array {
     static $s = null;
-    if ($s === null) { $s = []; try { foreach (db()->query('SELECT skey, svalue FROM app_settings') as $r) $s[$r['skey']] = (string) $r['svalue']; } catch (Throwable $e) {} }
+    if ($s === null) {
+        $s = []; try { foreach (db()->query('SELECT skey, svalue FROM app_settings') as $r) $s[$r['skey']] = (string) $r['svalue']; } catch (Throwable $e) {}
+        if (($s['terms_default'] ?? '') === TERMS_OLD_DEFAULT) {          // the original wording was never edited: switch to the shorter, politer one
+            $s['terms_default'] = TERMS_DEFAULT;
+            try { db()->prepare('UPDATE app_settings SET svalue = ?, updated_at = ? WHERE skey = ? AND svalue = ?')->execute([TERMS_DEFAULT, now(), 'terms_default', TERMS_OLD_DEFAULT]); } catch (Throwable $e) {}
+        }
+    }
     return $s;
 }
 function doc_setting(string $k, string $d = ''): string { $v = doc_settings()[$k] ?? ''; return $v !== '' ? $v : $d; }
@@ -216,7 +226,8 @@ function save_document(PDO $pdo, array $admin, string $type, ?int $id, array $in
     if ($isPosted && mb_strlen($editReason) < 5) $err['edit_reason'] = 'Give the reason for changing a posted document.';
 
     $date = t($in, 'doc_date', 10); if (!valid_date($date)) $err['doc_date'] = 'Choose a valid date.';
-    $due = t($in, 'due_date', 10); if ($due !== '' && !valid_date($due)) $err['due_date'] = 'Choose a valid date.'; if ($due !== '' && !isset($err['doc_date']) && !isset($err['due_date']) && $due < $date && $type !== 'receipt') $err['due_date'] = 'This cannot be before the document date.';
+    $due = t($in, 'due_date', 10); if ($type === 'invoice' && valid_date($date)) $due = invoice_due_date($date);
+    if ($due !== '' && !valid_date($due)) $err['due_date'] = 'Choose a valid date.'; if ($due !== '' && !isset($err['doc_date']) && !isset($err['due_date']) && $due < $date && $type !== 'receipt') $err['due_date'] = 'This cannot be before the document date.';
     $cur = strtoupper(t($in, 'currency', 3)) ?: doc_setting('default_currency', 'UGX'); if (!isset(CURRENCIES[$cur])) $err['currency'] = 'Choose a supported currency.';
 
     $cid = (int) ($in['customer_id'] ?? 0); $cust = null;
@@ -372,8 +383,9 @@ function convert_document(PDO $pdo, array $admin, int $id, string $target): arra
     $s = $pdo->prepare("SELECT doc_no FROM documents WHERE parent_id = ? AND doc_type = ? AND status <> 'cancelled' LIMIT 1"); $s->execute([$id, $target]);
     if ($target !== 'receipt' && ($ex = $s->fetchColumn())) return ['ok' => false, 'error' => 'Already converted: ' . $ex . '. Cancel it first if you need to convert again.'];
     $in = ['customer_id' => $src['customer_id'], 'doc_date' => (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d'), 'currency' => $src['currency'], 'salesperson' => $src['salesperson'], 'reference_text' => $src['reference_text'] ?: '', 'notes' => $src['notes'], 'terms' => $src['terms'] ?: doc_setting('terms_default'), 'parent_id' => $id];
-    $days = (int) doc_setting($target === 'invoice' ? 'invoice_due_days' : 'quote_valid_days', '30');
-    if ($target !== 'receipt') $in['due_date'] = (new DateTime($in['doc_date']))->modify("+$days days")->format('Y-m-d');
+    $days = (int) doc_setting('quote_valid_days', '30');
+    if ($target === 'invoice') $in['due_date'] = invoice_due_date($in['doc_date']);
+    elseif ($target !== 'receipt') $in['due_date'] = (new DateTime($in['doc_date']))->modify("+$days days")->format('Y-m-d');
     if ($target === 'receipt') {
         $bal = db_cents($src['total']) - invoice_paid($pdo, $id);
         if ($bal <= 0) return ['ok' => false, 'error' => 'This invoice is already fully paid.'];
