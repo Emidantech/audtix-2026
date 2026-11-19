@@ -541,3 +541,16 @@ html.nav-lock .fab { display: none; }
 .strip2 .p-otibee img { width: 22px; height: 22px; }
 .strip2 .p-otibee b { font-size: 14px; font-weight: 700; color: #0A2A55; }
 @media (max-width: 760px) { .strip2 .wrap { justify-content: center; } .strip2 .p-lenovo, .strip2 .p-dell, .strip2 .p-otibee { height: 36px; } .strip2 .p-dell { height: 34px; } }
+
+/* ---- moving rows: partner strip and clients (marquee.js) ---- */
+.mq { overflow: hidden; min-width: 0; }
+.mq.mq-on { display: block; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+.mq-track { display: flex; width: max-content; animation: mq-left 28s linear infinite; will-change: transform; }
+.mq-set { display: flex; align-items: center; flex-shrink: 0; gap: 40px; padding-right: 40px; }
+.mq-clients .mq-set { gap: 14px; padding-right: 14px; }
+.mq:hover .mq-track, .mq:focus-within .mq-track { animation-play-state: paused; }
+@keyframes mq-left { from { transform: translateX(0); } to { transform: translateX(calc(var(--mq-w, 50%) * -1)); } }
+.cgroups.mq-hidden { display: none; }
+.mq-clients { margin-top: 28px; }
+.mq-clients .clogo, .mq-clients .wordmark { white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .mq-track { animation: none; } .mq.mq-on { overflow-x: auto; -webkit-mask-image: none; mask-image: none; } .mq-set[aria-hidden] { display: none; } }

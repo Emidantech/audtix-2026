@@ -46,7 +46,7 @@ if ($in === null) {
                 $in['customer_id'] = (int) capture_customer($pdo, ['name' => $rfq['name'], 'contact_person' => $rfq['contact'], 'tin' => $rfq['tin'], 'address' => $rfq['location'], 'phone' => $rfq['phone'], 'email' => $rfq['email'], 'note' => 'Registered from ' . $rfq['ref'] . '.']);
                 if (!$in['customer_id']) $rfqCustErr = (string) ($GLOBALS['capture_customer_error'] ?? '');
             }
-            $in['lines'] = [['description' => $rfq['title'] . ($rfq['summary'] !== '' ? ': ' . $rfq['summary'] : ''), 'quantity' => '1']];
+            $in['lines'] = rfq_lines($rfq);   // one line per selected subcategory / equipment item
         }
     }
 }

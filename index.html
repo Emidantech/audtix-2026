@@ -59,6 +59,10 @@ body { margin:0 !important; overflow-x:hidden !important; }
 .strip2 .p-lenovo { width:auto !important; height:42px !important; object-fit:contain !important; }
 .strip2 .p-dell { width:auto !important; height:40px !important; object-fit:contain !important; }
 .strip2 .p-otibee { display:flex !important; align-items:center !important; gap:8px !important; padding:8px 14px !important; font-size:14px !important; border:1px solid #d5e2f6 !important; border-radius:8px !important; color:#09285d !important; white-space:nowrap !important; }
+.strip2 .mq { flex:1 1 0 !important; min-width:0 !important; }
+.strip2 .mq .lab { width:auto !important; text-align:left !important; }
+.strip2 .mq-set { gap:44px !important; align-items:center !important; }
+.strip2 .p-lenovo, .strip2 .p-dell { flex:none !important; }
 .strip2 .p-otibee img { width:22px !important; height:22px !important; object-fit:contain !important; }
 
 @media (max-width:1100px) {
@@ -146,10 +150,10 @@ body { margin:0 !important; overflow-x:hidden !important; }
 
 <div class="strip2"><div class="wrap">
   <span class="lab">Certified ICT hardware partners</span>
-  <img class="p-lenovo" src="img/partner-lenovo.jpg" alt="Lenovo 360 Advanced Data Center, 2025 accreditation" width="640" height="273" loading="lazy">
+  <div class="mq" data-marquee data-mq-speed="24"><img class="p-lenovo" src="img/partner-lenovo.jpg" alt="Lenovo 360 Advanced Data Center, 2025 accreditation" width="640" height="273" loading="lazy">
   <img class="p-dell" src="img/partner-dell.jpg" alt="Dell Technologies Authorized Partner" width="520" height="151" loading="lazy">
   <span class="lab">Partner</span>
-  <span class="p-otibee"><img src="img/logo-otibee.png" alt="" width="240" height="240" loading="lazy"><b>Otibee Technologies Ltd</b></span>
+  <span class="p-otibee"><img src="img/logo-otibee.png" alt="" width="240" height="240" loading="lazy"><b>Otibee Technologies Ltd</b></span></div>
 </div></div>
 
 <section class="rebrand" id="new-name" aria-label="Our new name"><div class="wrap rb-in">
@@ -264,6 +268,6 @@ body { margin:0 !important; overflow-x:hidden !important; }
   </div>
   <div class="fbase"><span>© 2026 Audtix Systems. info@audtix.com</span><span>Lenovo and Dell Technologies are trademarks of their respective owners.</span></div>
 </div></footer>
-<script src="app.js?v=20261117b"></script>
+<script src="app.js?v=20261117b"></script><script src="marquee.js?v=20261118a" defer></script>
 </body>
 </html>
