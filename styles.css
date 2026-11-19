@@ -554,3 +554,31 @@ html.nav-lock .fab { display: none; }
 .mq-clients { margin-top: 28px; }
 .mq-clients .clogo, .mq-clients .wordmark { white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .mq-track { animation: none; } .mq.mq-on { overflow-x: auto; -webkit-mask-image: none; mask-image: none; } .mq-set[aria-hidden] { display: none; } }
+
+/* ---- Audtix Assistant chat widget (chat.js) ---- */
+.cb { position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 85; font-family: inherit; }
+.cb-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 14px; color: #fff; background: var(--blue-deep, #0F52A0); padding: 12px 16px; border-radius: 99px; box-shadow: 0 10px 28px rgba(6, 30, 66, .28); }
+.cb-btn:hover { background: var(--navy, #0A2A55); } .cb-btn:focus-visible { outline: 3px solid var(--blue-mid, #6aa9f5); outline-offset: 3px; }
+.cb.open .cb-btn { display: none; }
+.cb-panel { position: absolute; left: 0; bottom: 0; width: min(370px, calc(100vw - 24px)); height: min(560px, calc(100vh - 32px)); display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line, #dce6f2); border-radius: 18px; box-shadow: 0 22px 60px rgba(6, 30, 66, .3); overflow: hidden; }
+.cb-panel[hidden] { display: none; }
+.cb-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; background: var(--navy, #0A2A55); color: #fff; }
+.cb-head b { display: block; font-size: 15px; } .cb-head small { color: #bcd2f2; font-size: 12px; }
+.cb-x { border: 0; background: transparent; color: #fff; font-size: 26px; line-height: 1; cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+.cb-msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #F4F7FB; }
+.cb-m { max-width: 86%; padding: 9px 12px; border-radius: 14px; font-size: 14.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.cb-m.b { align-self: flex-start; background: #fff; border: 1px solid var(--line, #dce6f2); border-bottom-left-radius: 4px; color: var(--fg, #10202F); }
+.cb-m.u { align-self: flex-end; background: var(--blue-deep, #0F52A0); color: #fff; border-bottom-right-radius: 4px; }
+.cb-m a { color: inherit; text-decoration: underline; } .cb-m.b a { color: var(--blue-ink, #0b4a97); }
+.cb-m .cb-wa { display: inline-block; margin-top: 8px; padding: 7px 12px; border-radius: 99px; background: #14A44D; color: #fff !important; text-decoration: none; font-weight: 700; font-size: 13.5px; }
+.cb-m.typing { display: flex; gap: 4px; } .cb-m.typing i { width: 7px; height: 7px; border-radius: 50%; background: #9bb0cc; animation: cbdot 1s infinite ease-in-out; } .cb-m.typing i:nth-child(2) { animation-delay: .15s; } .cb-m.typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes cbdot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.cb-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; background: #F4F7FB; } .cb-chips:empty { display: none; }
+.cb-chips button { font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 99px; border: 1px solid var(--blue-deep, #0F52A0); background: #fff; color: var(--blue-ink, #0b4a97); cursor: pointer; }
+.cb-form, .cb-contact { padding: 10px; border-top: 1px solid var(--line, #dce6f2); background: #fff; }
+.cb-form { display: flex; gap: 8px; } .cb-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.cb-in, .cb-contact input { flex: 1; font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid #c6d4e5; border-radius: 10px; min-width: 0; }
+.cb-send { font: inherit; font-weight: 700; font-size: 14px; border: 0; border-radius: 10px; background: var(--blue-deep, #0F52A0); color: #fff; padding: 9px 14px; cursor: pointer; }
+.cb-contact { display: grid; gap: 6px; } .cb-contact[hidden] { display: none; } .cb-contact b { font-size: 13.5px; } .cb-skip { font: inherit; font-size: 13px; background: none; border: 0; color: var(--mut, #5a6b7d); cursor: pointer; text-decoration: underline; }
+@media (max-width: 520px) { .cb-panel { left: 0; width: calc(100vw - 24px); height: min(78vh, 560px); } .cb-lab { display: none; } .cb-btn { padding: 13px; } }
+@media (prefers-reduced-motion: reduce) { .cb-m.typing i { animation: none; } }
