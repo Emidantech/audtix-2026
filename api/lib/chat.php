@@ -57,6 +57,7 @@ function chat_ai_reply(array $history): ?string {
 function chat_rule_reply(string $message, int $botTurns): array {
     $l = ' ' . mb_strtolower($message) . ' ';
     foreach (CHAT_HANDOFF_WORDS as $w) if (str_contains($l, $w)) return ["Understood. I will pass this to a colleague together with our conversation so you do not have to repeat yourself. They will pick it up on WhatsApp shortly.", true];
+    if (mb_strlen($message) < 160 && preg_match('/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\d{9,}/i', $message)) return ["Thank you, I have noted your details so a colleague can reach you. What would you like help with?", false];
     foreach (chat_rules() as [$keys, $ans]) foreach ($keys as $k) if (str_contains($l, $k)) return [$ans, false];
     return $botTurns >= 2 ? ["I want to get this right, so I will bring in a colleague who can help properly. They will see our conversation on WhatsApp.", true]
                           : ["Thanks for your message. Could you tell me a little more, for example whether it is about tax, audit, an ERP or software system, cyber security, networking or ICT hardware?", false];

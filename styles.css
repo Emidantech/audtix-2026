@@ -582,3 +582,4 @@ html.nav-lock .fab { display: none; }
 .cb-contact { display: grid; gap: 6px; } .cb-contact[hidden] { display: none; } .cb-contact b { font-size: 13.5px; } .cb-skip { font: inherit; font-size: 13px; background: none; border: 0; color: var(--mut, #5a6b7d); cursor: pointer; text-decoration: underline; }
 @media (max-width: 520px) { .cb-panel { left: 0; width: calc(100vw - 24px); height: min(78vh, 560px); } .cb-lab { display: none; } .cb-btn { padding: 13px; } }
 @media (prefers-reduced-motion: reduce) { .cb-m.typing i { animation: none; } }
+.cb-contact { grid-template-columns: 1fr 1fr; } .cb-contact b, .cb-contact input[type=email], .cb-contact > div { grid-column: 1 / -1; }
