@@ -119,3 +119,16 @@
 @media(max-width:520px){.dm .doc-actions{flex-wrap:wrap}}
 
 .dm .lrow .svc-pick{width:100%;margin-bottom:6px;padding:7px 9px;font-size:13px;min-height:0}
+
+/* phones: compact document screens */
+@media(max-width:575.98px){
+.dm{font-size:13.5px}.dm h1{font-size:19px}.dm h2{font-size:15px;margin-bottom:8px}
+.dm .card{padding:12px;border-radius:12px;margin-bottom:12px}
+.dm .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.dm .stat{padding:9px 10px}.dm .stat b{font-size:20px}.dm .stat span{font-size:11.5px}
+.dm input,.dm select,.dm textarea{padding:7px 9px;font-size:14px}
+.dm .btn{padding:7px 12px;font-size:13px}.dm .btn.sm{padding:5px 9px;font-size:12px}
+.dm th,.dm td{padding:7px 8px;font-size:12.5px}.dm th{font-size:10.5px}
+.dm .mono{font-size:11.5px;white-space:nowrap}
+.dm .doc-actions .btn{padding:5px 9px;font-size:12px}
+.dm .filters{gap:6px}.dm .filters label{font-size:12px}
+}
