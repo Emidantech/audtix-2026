@@ -7,10 +7,13 @@ require_once dirname(__DIR__, 2) . '/admin/inc/docs.php';
 require_once dirname(__DIR__, 2) . '/admin/inc/pdf.php';
 require_once dirname(__DIR__, 2) . '/admin/inc/render.php';
 
+const BIZ_PORTAL = true;
 const BIZ_TYPES = ['quotation', 'invoice', 'proforma', 'receipt'];
 const BIZ_TRIAL_DAYS = 14;
 const BIZ_IDLE = 7200;
 
+require_once __DIR__ . '/saas.php';
+require_once __DIR__ . '/pay.php';
 function is_https(): bool { return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'); }
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('audtix_biz');
@@ -34,11 +37,15 @@ function temp_password(): string { $c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQR
 
 /** Subscription state: ok = may create and post; otherwise the portal is read-only (nothing is ever deleted). */
 function sub_state(array $a): array {
-    $today = gmdate('Y-m-d'); $st = (string) $a['status'];
+    $today = gmdate('Y-m-d'); $st = (string) $a['status']; $ap = (string) ($a['approval'] ?? 'approved');
+    if ($ap === 'pending') return ['ok' => false, 'label' => 'Awaiting approval', 'note' => 'Your registration is being reviewed. You will be able to create documents once it is approved.', 'days' => 0];
+    if ($ap === 'rejected') return ['ok' => false, 'label' => 'Not approved', 'note' => 'This registration was not approved. Contact the service provider.', 'days' => 0];
     if ($st === 'suspended') return ['ok' => false, 'label' => 'Suspended', 'note' => 'This account is suspended. Contact the service provider.', 'days' => 0];
     $end = $a['paid_until'] && $a['paid_until'] >= $today ? $a['paid_until'] : ($st === 'trial' && $a['trial_ends'] && $a['trial_ends'] >= $today ? $a['trial_ends'] : null);
     if ($st === 'active' && !$a['paid_until']) return ['ok' => true, 'label' => 'Active', 'note' => '', 'days' => 9999];
     if ($end) { $days = (int) floor((strtotime($end) - strtotime($today)) / 86400); return ['ok' => true, 'label' => $end === $a['trial_ends'] && $a['paid_until'] < $today ? 'Free trial' : 'Active', 'note' => $days <= 7 ? ($days <= 0 ? 'Ends today.' : "Ends in $days day" . ($days === 1 ? '' : 's') . '.') : '', 'days' => $days, 'until' => $end]; }
+    $last = max((string) $a['paid_until'], (string) $a['trial_ends']); $grace = isset($a['grace_days']) && $a['grace_days'] !== null && $a['grace_days'] !== '' ? (int) $a['grace_days'] : (int) biz_platform('biz_grace_days', (string) BIZ_GRACE_DEFAULT);
+    if ($last !== '' && $grace > 0) { $gEnd = gmdate('Y-m-d', strtotime($last . " +$grace days")); if ($gEnd >= $today) { $left = (int) floor((strtotime($gEnd) - strtotime($today)) / 86400); return ['ok' => true, 'label' => 'Grace period', 'note' => "Your subscription has ended. Renew within $left day" . ($left === 1 ? '' : 's') . ' to keep creating documents.', 'days' => 0, 'until' => $last, 'grace' => true]; } }
     return ['ok' => false, 'label' => 'Expired', 'note' => 'Your subscription has ended. You can still view and download your documents. Renew to create new ones.', 'days' => 0];
 }
 
@@ -54,7 +61,7 @@ function me(): ?array {
 }
 function account(): array {
     static $a = null; if ($a) return $a; $u = me(); $s = db()->prepare('SELECT * FROM biz_accounts WHERE id = ?'); $s->execute([$u['account_id']]); $a = $s->fetch();
-    $a['_sub'] = sub_state($a); biz_set_company($a); return $a;
+    biz_bootstrap($a); $a = array_merge($a, array_diff_key(biz_ext((int) $a['id']), ['account_id' => 1])); $a['_sub'] = sub_state($a); biz_set_company($a); return $a;
 }
 function logo_file_path(?string $f): string { $d = storage_dir() . '/biz-logos'; return ($f && preg_match('/^[a-f0-9]{24}\.png$/', $f) && is_file($d . '/' . $f)) ? $d . '/' . $f : ''; }
 function biz_set_company(array $a): void {
@@ -65,7 +72,7 @@ function biz_require(bool $write = false): array {
     $u = me();
     if (!$u) { redirect('login.php'); }
     check_csrf(); $a = account();
-    if ((int) $u['must_change_pw'] && basename($_SERVER['SCRIPT_NAME']) !== 'settings.php') redirect('settings.php?pw=1');
+    if ((int) $u['must_change_pw'] && !biz_impersonating() && basename($_SERVER['SCRIPT_NAME']) !== 'settings.php') redirect('settings.php?pw=1');
     if ($write && !$a['_sub']['ok']) { flash($a['_sub']['note'], 'bad'); redirect('index.php'); }
     return $u;
 }
@@ -73,13 +80,18 @@ function owner_only(array $u): void { if ($u['role'] !== 'owner') { flash('Only 
 
 function biz_head(string $title, string $active = ''): void {
     $u = me(); $a = $u ? account() : null; $f = flash();
-    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . h($title) . ' | ' . h($a ? $a['name'] : 'Business documents') . '</title><meta name="robots" content="noindex"><link rel="stylesheet" href="biz.css?v=20261119a"><link rel="stylesheet" href="../admin/doc.css"><script src="biz.js?v=20261119a" defer></script></head><body>';
+    echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . h($title) . ' | ' . h($a ? $a['name'] : 'Business documents') . '</title><meta name="robots" content="noindex"><link rel="stylesheet" href="biz.css?v=20261120a"><link rel="stylesheet" href="../admin/doc.css?v=20261119a">' . ($a ? biz_theme_css($a) : '') . '<script src="biz.js?v=20261120a" defer></script></head><body>';
     if ($u) {
-        $nav = ['index.php' => ['Home', 'home'], 'docs.php' => ['Documents', 'docs'], 'customers.php' => ['Customers', 'cust'], 'items.php' => ['Items', 'items'], 'settings.php' => ['Settings', 'set']];
+        $nav = ['index.php' => ['Home', 'home', true]];
+        $nav['docs.php'] = ['Documents', 'docs', bcan('docs.view') && biz_module_on('docs')]; $nav['customers.php'] = ['Customers', 'cust', biz_module_on('customers')]; $nav['items.php'] = ['Items', 'items', biz_module_on('items')];
+        $nav['branches.php'] = ['Branches', 'branch', bcan('branches.manage') && biz_module_on('branches')]; $nav['reports.php'] = ['Reports', 'rep', bcan('reports.view') && biz_module_on('reports')];
+        $nav['team.php'] = ['Team', 'team', bcan('team.manage') && biz_module_on('team')]; $nav['billing.php'] = ['Subscription', 'bill', bcan('billing.manage')]; $nav['settings.php'] = ['Settings', 'set', true];
+        if ($imp = biz_impersonating()) echo '<div class="imp"><b>Support session.</b> Audtix staff member ' . h((string) ($imp['admin_name'] ?? '')) . ' is viewing this account. All actions are recorded. <form method="post" action="imp-exit.php">' . csrf_field() . '<button class="btn sm">Exit and return to Super Admin</button></form></div>';
         echo '<header class="top"><a class="brand" href="index.php">' . (logo_file_path($a['logo']) ? '<img src="' . h($GLOBALS['DOC_CO']['_logo_url']) . '" alt="">' : '') . '<b>' . h($a['name']) . '</b></a><nav class="tabs">';
-        foreach ($nav as $href => [$l, $k]) echo '<a href="' . $href . '"' . ($active === $k ? ' class="on"' : '') . '>' . $l . '</a>';
+        foreach ($nav as $href => [$l, $k, $show]) if ($show) echo '<a href="' . $href . '"' . ($active === $k ? ' class="on"' : '') . '>' . $l . '</a>';
         echo '</nav><a class="out" href="logout.php">Sign out</a></header>';
-        $s = $a['_sub']; if (!$s['ok'] || $s['note']) echo '<div class="sub ' . ($s['ok'] ? 'warn' : 'bad') . '"><b>' . h($s['label']) . '.</b> ' . h($s['note']) . ' <a href="settings.php#plan">Subscription</a></div>';
+        $s = $a['_sub']; if (!$s['ok'] || $s['note']) echo '<div class="sub ' . ($s['ok'] ? 'warn' : 'bad') . '"><b>' . h($s['label']) . '.</b> ' . h($s['note']) . ' <a href="billing.php">Subscription</a></div>';
+        try { $an = db()->query("SELECT title, body FROM biz_announcements WHERE expires_on IS NULL OR expires_on >= '" . gmdate('Y-m-d') . "' ORDER BY id DESC LIMIT 2")->fetchAll(); foreach ($an as $x) echo '<div class="sub note"><b>' . h($x['title']) . '.</b> ' . h($x['body']) . '</div>'; } catch (Throwable $e) {}
     }
     echo '<main class="wrap">'; if ($f) echo '<div class="flash ' . ($f[0] === 'ok' ? 'ok' : 'bad') . '">' . h($f[1]) . '</div>';
     echo '<h1 class="pt">' . h($title) . '</h1>';
@@ -89,6 +101,7 @@ function biz_foot(): void { echo '</main><footer class="ft">Documents by <a href
 /* ===================== documents ===================== */
 function biz_doc(PDO $pdo, int $accId, int $id): ?array {
     $s = $pdo->prepare('SELECT * FROM biz_documents WHERE id = ? AND account_id = ?'); $s->execute([$id, $accId]); $d = $s->fetch(); if (!$d) return null;
+    [$bq, $bp] = biz_branch_sql('id'); if ($bq !== '') { $k = $pdo->prepare('SELECT COUNT(*) FROM biz_documents WHERE id = ?' . $bq); $k->execute([$id, ...$bp]); if (!(int) $k->fetchColumn()) return null; }
     $l = $pdo->prepare('SELECT * FROM biz_document_lines WHERE document_id = ? ORDER BY line_no'); $l->execute([$id]); $d['lines'] = $l->fetchAll(); return $d;
 }
 function biz_invoice_paid(PDO $pdo, int $invId, int $beforeId = 0): int {
@@ -157,7 +170,7 @@ function biz_save(PDO $pdo, array $u, array $a, string $type, ?int $id, array $i
 function biz_post(PDO $pdo, array $u, array $a, int $id): array {
     $d = biz_doc($pdo, (int) $a['id'], $id); if (!$d) return ['ok' => false, 'error' => 'Not found.']; if ($d['status'] !== 'draft') return ['ok' => false, 'error' => 'Already posted.'];
     if ($d['doc_type'] === 'receipt' && $d['parent_id']) { $bal = db_cents((biz_doc($pdo, (int) $a['id'], (int) $d['parent_id']) ?? ['total' => 0])['total']) - biz_invoice_paid($pdo, (int) $d['parent_id']); if (db_cents($d['total']) > $bal) return ['ok' => false, 'error' => 'The amount is more than the invoice balance now. Edit the receipt.']; }
-    $lim = (int) $a['monthly_doc_limit']; if ($lim > 0) { $s = $pdo->prepare("SELECT COUNT(*) FROM biz_documents WHERE account_id = ? AND status IN ('posted','cancelled') AND posted_at >= ?"); $s->execute([$a['id'], gmdate('Y-m-01 00:00:00')]); if ((int) $s->fetchColumn() >= $lim) return ['ok' => false, 'error' => "Your plan allows $lim posted documents a month. Contact us to upgrade."]; }
+    $lim = biz_limit($a, 'max_docs_month'); if ($lim > 0) { $s = $pdo->prepare("SELECT COUNT(*) FROM biz_documents WHERE account_id = ? AND status IN ('posted','cancelled') AND posted_at >= ?"); $s->execute([$a['id'], gmdate('Y-m-01 00:00:00')]); if ((int) $s->fetchColumn() >= $lim) return ['ok' => false, 'error' => "Your plan allows $lim posted documents a month. Contact us to upgrade."]; }
     $pdo->prepare("UPDATE biz_documents SET status = 'posted', posted_by = ?, posted_at = ?, updated_at = ? WHERE id = ? AND account_id = ? AND status = 'draft'")->execute([$u['id'], now(), now(), $id, $a['id']]); return ['ok' => true];
 }
 function biz_cancel(PDO $pdo, array $u, array $a, int $id, string $reason): array {

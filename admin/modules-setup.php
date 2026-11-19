@@ -3,8 +3,8 @@
    Runs database/migrations/2026-11-18-modules-chatbot.sql statement by statement. It only ADDS missing tables. */
 require __DIR__ . '/inc/boot.php';
 $admin = require_super(); $pdo = db();
-const MOD_TABLES = ['hr_employees', 'hr_leave', 'hr_payroll_runs', 'hr_payslips', 'fin_expenses', 'crm_deals', 'crm_activities', 'mkt_campaigns', 'proc_suppliers', 'proc_orders', 'efris_log', 'chat_sessions', 'chat_messages', 'biz_accounts', 'biz_users', 'biz_customers', 'biz_items', 'biz_documents', 'biz_document_lines'];
-const MOD_FILES = ['2026-11-18-modules-chatbot.sql', '2026-11-19-business-accounts.sql'];
+const MOD_TABLES = ['hr_employees', 'hr_leave', 'hr_payroll_runs', 'hr_payslips', 'fin_expenses', 'crm_deals', 'crm_activities', 'mkt_campaigns', 'proc_suppliers', 'proc_orders', 'efris_log', 'chat_sessions', 'chat_messages', 'biz_accounts', 'biz_users', 'biz_customers', 'biz_items', 'biz_documents', 'biz_document_lines', 'biz_plans', 'biz_account_ext', 'biz_branches', 'biz_roles', 'biz_user_ext', 'biz_doc_meta', 'biz_categories', 'biz_item_meta', 'biz_audit', 'biz_login_log', 'biz_imp_log', 'biz_reset_tokens', 'biz_payments', 'biz_announcements', 'biz_support'];
+const MOD_FILES = ['2026-11-18-modules-chatbot.sql', '2026-11-19-business-accounts.sql', '2026-11-20-saas-platform.sql'];
 function mod_tables_state(PDO $pdo): array { $o = []; foreach (MOD_TABLES as $t) { try { $pdo->query('SELECT 1 FROM ' . $t . ' LIMIT 1'); $o[$t] = true; } catch (Throwable $e) { $o[$t] = false; } } return $o; }
 $log = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -5,7 +5,7 @@ a{color:var(--pri)}.muted,small{color:var(--mut)}small{font-size:12.5px}.row sma
 .top{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px 14px;flex-wrap:wrap}
 .brand{font-weight:700;text-decoration:none;color:var(--fg)}.brand img{height:26px;vertical-align:middle;margin-right:6px}
 .tabs{display:flex;gap:2px;flex:1;overflow-x:auto}.tabs a{padding:8px 11px;border-radius:8px;text-decoration:none;color:var(--mut);white-space:nowrap}.tabs a.on{background:var(--bg);color:var(--fg);font-weight:600}
-.out{font-size:13px}.sub{width:100%;font-size:13px;padding:6px 14px;background:#fff4e5;color:#7a4100;margin:8px -14px -8px;width:calc(100% + 28px)}
+.out{font-size:13px}.sub{font-size:13px;padding:6px 14px;background:#fff4e5;color:#7a4100}
 .wrap{max-width:900px;margin:0 auto;padding:16px max(14px,env(safe-area-inset-left,0px)) 40px}.pt{font-size:22px;margin:4px 0 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 14px}.card h2{font-size:16px;margin:0 0 10px}.card h3{font-size:14px;margin:14px 0 6px}.narrow{max-width:440px;margin:20px auto}.flush{padding:0}.pad{padding:14px}
 label{display:block;font-size:13px;color:var(--mut);margin:0 0 10px}input,select,textarea{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;min-width:0}
@@ -29,3 +29,10 @@ details.cx{width:100%}details.cx summary{display:inline-block;cursor:pointer}det
 .ft{text-align:center;color:var(--mut);font-size:12.5px;padding:18px}@media print{.top,.noprint,.ft{display:none}.wrap{max-width:none;padding:0}.sheetwrap{border:0}}
 .sheetwrap .sheet{min-width:560px}
 .sheetwrap .sheet table{min-width:0}
+.sub.note{background:#e8f1fd;color:#0b3a7a}.imp{background:#b42318;color:#fff;padding:8px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:9}.imp form{margin:0}.imp .btn{background:#fff;color:#b42318}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}.plans .plan{display:flex;flex-direction:column;gap:4px;margin:0}.plans .plan.sel{outline:2px solid var(--pri)}.plans .plan select{margin:4px 0}
+label.plan{border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--fg);cursor:pointer}label.plan input{width:auto;display:inline;margin:0 6px 0 0}label.plan small{display:block}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}@media(max-width:560px){.checks{grid-template-columns:1fr}}label.chk{color:var(--fg);display:flex;gap:8px;align-items:center}label.chk input{width:auto;margin:0}
+form.inl{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:0}form.inl select{width:auto;margin:0;padding:6px}.narrow.wide{max-width:620px}.kv td{padding:4px 12px 4px 0;vertical-align:top}.card.receipt{max-width:560px;margin:0 auto}
+.list .row>.r small{display:block}
+.tabs{min-width:0}.top{max-width:100vw}@media(max-width:700px){.tabs{order:3;flex:1 1 100%}}body{overflow-x:hidden}

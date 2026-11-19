@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/inc/boot.php';
-$u = biz_require(); $a = account(); $pdo = db(); $aid = (int) $a['id']; $can = $a['_sub']['ok']; $err = [];
+$u = biz_require(); $a = account(); biz_need_module('customers'); $pdo = db(); $aid = (int) $a['id']; $can = $a['_sub']['ok'] && bcan('customers.manage'); $err = [];
 $id = (int) ($_GET['edit'] ?? 0); $e = null;
 if ($id) { $s = $pdo->prepare('SELECT * FROM biz_customers WHERE id = ? AND account_id = ?'); $s->execute([$id, $aid]); $e = $s->fetch() ?: null; }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can) {
@@ -27,5 +27,5 @@ biz_head('Customers', 'cust'); ?>
 <div class="actions"><?php if ($e): ?><a class="btn ghost" href="customers.php">Cancel</a><?php endif; ?><button class="btn">Save</button></div></form></div><?php endif; ?>
 <form class="bar" method="get"><input name="q" placeholder="Search customers" value="<?= h($q) ?>"><button class="btn sm ghost">Search</button></form>
 <div class="card flush"><?php if (!$rows): ?><p class="muted pad">No customers yet.</p><?php endif; ?><div class="list"><?php foreach ($rows as $c): ?>
-<div class="row"><div><b><?= h($c['name']) ?></b><small><?= h(trim($c['phone'] . ' ' . $c['email'])) ?></small></div><div class="r"><?php if ($can): ?><a class="btn sm ghost" href="customers.php?edit=<?= (int) $c['id'] ?>">Edit</a><?php endif; ?></div></div><?php endforeach; ?></div></div>
+<div class="row"><div><b><?= h($c['name']) ?></b><small><?= h(trim($c['phone'] . ' ' . $c['email'])) ?></small></div><div class="r"><a class="btn sm ghost" href="reports.php?customer=<?= (int) $c['id'] ?>&from=2000-01-01">History</a><?php if ($can): ?><a class="btn sm ghost" href="customers.php?edit=<?= (int) $c['id'] ?>">Edit</a><?php endif; ?></div></div><?php endforeach; ?></div></div>
 <?php biz_foot();

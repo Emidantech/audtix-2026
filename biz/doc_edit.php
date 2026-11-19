@@ -1,15 +1,16 @@
 <?php
 require __DIR__ . '/inc/boot.php';
-$u = biz_require(true); $a = account(); $pdo = db(); $aid = (int) $a['id'];
+$u = biz_require(true); biz_need('docs.create'); biz_need_module('docs'); $a = account(); $pdo = db(); $aid = (int) $a['id'];
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0); $d = $id ? biz_doc($pdo, $aid, $id) : null;
 if ($id && (!$d || $d['status'] !== 'draft')) { flash('Only drafts can be edited.', 'bad'); redirect($d ? 'doc.php?id=' . $id : 'docs.php'); }
 $type = $d ? $d['doc_type'] : (string) ($_GET['type'] ?? $_POST['type'] ?? ''); if (!in_array($type, BIZ_TYPES, true)) redirect('index.php');
 $T = DOC_TYPES[$type]; $errors = []; $isR = $type === 'receipt';
-$lim = (int) $a['monthly_doc_limit'];
+$lim = biz_limit($a, 'max_docs_month'); $branches = biz_branches($aid); $myBranch = biz_branch();
 $customers = $pdo->prepare('SELECT * FROM biz_customers WHERE account_id = ? ORDER BY name LIMIT 500'); $customers->execute([$aid]); $customers = $customers->fetchAll();
 $items = $pdo->prepare('SELECT * FROM biz_items WHERE account_id = ? AND is_active = 1 ORDER BY name LIMIT 500'); $items->execute([$aid]); $items = $items->fetchAll();
 $invs = []; if ($isR) { $s = $pdo->prepare("SELECT * FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted' ORDER BY id DESC LIMIT 200"); $s->execute([$aid]);
     foreach ($s as $i) { $bal = db_cents($i['total']) - biz_invoice_paid($pdo, (int) $i['id'], $d ? (int) $d['id'] : 0); if ($bal > 0) $i['_bal'] = $bal; else continue; $invs[] = $i; } }
+$brSel = 0; if ($d) { $q = $pdo->prepare('SELECT branch_id FROM biz_doc_meta WHERE document_id = ?'); $q->execute([$d['id']]); $brSel = (int) $q->fetchColumn(); }
 $today = gmdate('Y-m-d'); $plus30 = (new DateTime('today'))->modify('+30 days')->format('Y-m-d');
 $in = $d ?: ['customer_id' => '', 'customer_name' => '', 'doc_date' => $today, 'due_date' => $T['due'] ? $plus30 : '', 'currency' => $a['currency'], 'terms' => $a['terms_default'], 'notes' => '', 'payment_method' => '', 'payment_ref' => '', 'reference_text' => '', 'salesperson' => '', 'parent_id' => (int) ($_GET['parent'] ?? 0) ?: '', 'lines' => [['description' => '', 'quantity' => '1', 'unit' => '', 'unit_price' => '', 'discount' => '', 'tax_rate' => '0']]];
 if (!$d && $isR && $in['parent_id']) { $p = biz_doc($pdo, $aid, (int) $in['parent_id']); if ($p && $p['doc_type'] === 'invoice') { $in['customer_id'] = $p['customer_id']; $in['customer_name'] = $p['customer_name']; $in['currency'] = $p['currency']; foreach ($invs as $i) if ($i['id'] == $p['id']) $in['lines'][0] = ['description' => 'Payment for invoice ' . $p['doc_no'], 'quantity' => '1', 'unit_price' => dec($i['_bal'])]; } }
@@ -21,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isR && !empty($_POST['parent_id'])) { $p = biz_doc($pdo, $aid, (int) $_POST['parent_id']); if ($p) { $in['customer_id'] = $p['customer_id']; $in['customer_name'] = $p['customer_name']; $in['currency'] = $p['currency']; } }
     $r = biz_save($pdo, $u, $a, $type, $id ?: null, $in);
     if ($r['ok']) {
+        $bid = $myBranch ?: (int) ($_POST['branch_id'] ?? 0); if ($bid) { $ok = false; foreach ($branches as $br) if ((int) $br['id'] === $bid) $ok = true; if ($ok) { try { $pdo->prepare('DELETE FROM biz_doc_meta WHERE document_id = ?')->execute([$r['id']]); $pdo->prepare('INSERT INTO biz_doc_meta (document_id, account_id, branch_id) VALUES (?,?,?)')->execute([$r['id'], $aid, $bid]); } catch (Throwable $e) {} } }
+        biz_audit('doc_' . (($_POST['go'] ?? '') === 'post' ? 'save_post' : 'save_draft'), $type . ' #' . $r['id']);
         if (($_POST['go'] ?? '') === 'post') { $p = biz_post($pdo, $u, $a, $r['id']); flash($p['ok'] ? $T['label'] . ' posted.' : $p['error'], $p['ok'] ? 'ok' : 'bad'); } else flash('Draft saved.');
         redirect('doc.php?id=' . $r['id']);
     }
@@ -44,6 +47,7 @@ biz_head(($id ? 'Edit ' : 'New ') . $T['label'], 'docs'); ?>
   <label>Date<input type="date" name="doc_date" value="<?= $v('doc_date') ?>" required></label>
   <?php if ($T['due'] !== ''): ?><label><?= h($T['due']) ?><input type="date" name="due_date" value="<?= $v('due_date') ?>"></label><?php endif; ?>
   <label>Currency<select name="currency"><?php foreach (CURRENCIES as $k => $c): ?><option value="<?= $k ?>"<?= ($in['currency'] ?? '') === $k ? ' selected' : '' ?>><?= $k ?></option><?php endforeach; ?></select></label>
+  <?php if ($branches && !$myBranch): ?><label>Branch<select name="branch_id"><option value="">No branch</option><?php foreach ($branches as $br): ?><option value="<?= (int) $br['id'] ?>"<?= (int) ($brSel ?? 0) === (int) $br['id'] ? ' selected' : '' ?>><?= h($br['name']) ?></option><?php endforeach; ?></select></label><?php endif; ?>
   <?php if ($isR): ?><label>Paid by<select name="payment_method"><?php foreach (['Cash', 'Mobile money', 'Bank transfer', 'Card', 'Cheque'] as $m): ?><option<?= ($in['payment_method'] ?? '') === $m ? ' selected' : '' ?>><?= $m ?></option><?php endforeach; ?></select></label><label>Payment reference<input name="payment_ref" value="<?= $v('payment_ref') ?>" maxlength="120"></label><?php endif; ?>
   <?php if (!$isR): ?><label>Reference<input name="reference_text" value="<?= $v('reference_text') ?>" maxlength="190" placeholder="PO, project, vehicle plate..."></label><?php endif; ?>
 </div></div>

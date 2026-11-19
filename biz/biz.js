@@ -18,3 +18,4 @@
   box.addEventListener('input',function(e){var t=e.target;if(t.classList.contains('f-desc')){var l=$('#itemlist');if(l){$$('option',l).forEach(function(o){if(o.value===t.value){var r=t.closest('.ln');$('.f-price',r).value=o.getAttribute('data-price')||'';$('.f-unit',r).value=o.getAttribute('data-unit')||'';$('.f-tax',r).value=o.getAttribute('data-tax')||'0';}});}}calc();});
   calc();
 })();
+document.addEventListener('click',function(e){if(e.target.closest('[data-print]'))window.print();});

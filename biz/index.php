@@ -1,14 +1,15 @@
 <?php
 require __DIR__ . '/inc/boot.php';
 $u = biz_require(); $a = account(); $pdo = db(); $aid = (int) $a['id']; $cur = $a['currency']; $m0 = gmdate('Y-m-01');
+[$bq, $bp] = biz_branch_sql('id');
 $sum = function (string $sql, array $x = []) use ($pdo): int { $s = $pdo->prepare($sql); $s->execute($x); return db_cents($s->fetchColumn()); };
-$inv = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted' AND doc_date >= ?", [$aid, $m0]);
-$rec = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'receipt' AND status = 'posted' AND doc_date >= ?", [$aid, $m0]);
-$open = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted'", [$aid])
-      - $sum("SELECT COALESCE(SUM(r.total),0) FROM biz_documents r WHERE r.account_id = ? AND r.doc_type = 'receipt' AND r.status = 'posted' AND r.parent_id IN (SELECT id FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted')", [$aid, $aid]);
-$recent = $pdo->prepare('SELECT * FROM biz_documents WHERE account_id = ? ORDER BY id DESC LIMIT 8'); $recent->execute([$aid]); $recent = $recent->fetchAll();
+$inv = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted' AND doc_date >= ?" . $bq, [$aid, $m0, ...$bp]);
+$rec = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'receipt' AND status = 'posted' AND doc_date >= ?" . $bq, [$aid, $m0, ...$bp]);
+$open = $sum("SELECT COALESCE(SUM(total),0) FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted'" . $bq, [$aid, ...$bp])
+      - $sum("SELECT COALESCE(SUM(r.total),0) FROM biz_documents r WHERE r.account_id = ? AND r.doc_type = 'receipt' AND r.status = 'posted' AND r.parent_id IN (SELECT id FROM biz_documents WHERE account_id = ? AND doc_type = 'invoice' AND status = 'posted')" . $bq, [$aid, $aid, ...$bp]);
+$recent = $pdo->prepare('SELECT * FROM biz_documents WHERE account_id = ?' . $bq . ' ORDER BY id DESC LIMIT 8'); $recent->execute([$aid, ...$bp]); $recent = $recent->fetchAll();
 biz_head('Home', 'home'); $can = $a['_sub']['ok']; ?>
-<div class="quick"><?php foreach (BIZ_TYPES as $t): ?><a class="q <?= $can ? '' : 'off' ?>" href="<?= $can ? 'doc_edit.php?type=' . $t : 'settings.php#plan' ?>"><span>+</span><?= h(DOC_TYPES[$t]['label']) ?></a><?php endforeach; ?></div>
+<div class="quick"><?php foreach (BIZ_TYPES as $t): if (!bcan('docs.create')) continue; ?><a class="q <?= $can ? '' : 'off' ?>" href="<?= $can ? 'doc_edit.php?type=' . $t : 'billing.php' ?>"><span>+</span><?= h(DOC_TYPES[$t]['label']) ?></a><?php endforeach; ?></div>
 <div class="stats">
   <div class="stat"><small>Invoiced this month</small><b><?= h(dmoney($inv, $cur)) ?></b></div>
   <div class="stat"><small>Received this month</small><b><?= h(dmoney($rec, $cur)) ?></b></div>

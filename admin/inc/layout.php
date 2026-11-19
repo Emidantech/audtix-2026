@@ -153,7 +153,7 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         if (can('doc_reports.view') || can('quotes.view') || can('requests.view')) echo nav_link('reports.php', 'bar-chart-line', 'Reports', $sec === 'doc_reports');
     }
 
-    if (function_exists('mod_defs') && (can_any('hr') || can_any('payroll') || can_any('fin') || can_any('crm') || can_any('mkt') || can_any('proc') || can_any('efris') || can_any('chat') || can_any('bizacc'))) {
+    if (function_exists('mod_defs') && (can_any('hr') || can_any('payroll') || can_any('fin') || can_any('crm') || can_any('mkt') || can_any('proc') || can_any('efris') || can_any('chat') || can_any('bizacc') || can_any('bizplans') || can_any('bizpay') || can_any('bizsupport'))) {
         $m = $c['mod']; echo '<li class="nav-header">BUSINESS MODULES</li>';
         if (can('hr.view') || can('payroll.view')) {
             $k = '';
@@ -166,7 +166,14 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         if (can('mkt.view')) echo nav_link('mod.php?m=mkt_campaigns', 'megaphone', 'Marketing', $sec === 'mkt', count_badge($m['mkt_campaigns']));
         if (can('proc.view')) echo nav_tree('truck', 'Procurement', $sec === 'proc', nav_link('mod.php?m=proc_suppliers', 'shop', 'Suppliers', $active === 'proc:proc_suppliers', count_badge($m['proc_suppliers'])) . nav_link('mod.php?m=proc_orders', 'cart-check', 'Purchase orders', $active === 'proc:proc_orders', count_badge($m['proc_orders'])));
         if (can('efris.view')) echo nav_link('efris.php', 'qr-code-scan', 'EFRIS e-invoicing', $sec === 'efris', badge($m['efris'], 'warning'));
-        if (can('bizacc.view')) echo nav_link('biz-accounts.php', 'receipt-cutoff', 'Business accounts', $sec === 'bizacc');
+        if (can_any('bizacc') || can_any('bizplans') || can_any('bizpay') || can_any('bizsupport')) {
+            $k = '';
+            if (can('bizacc.view')) $k .= nav_link('biz-accounts.php', 'buildings', 'Businesses', $active === 'bizacc:accounts') . nav_link('biz-audit.php', 'journal-check', 'Audit and analytics', $active === 'bizacc:audit');
+            if (can('bizplans.view')) $k .= nav_link('biz-plans.php', 'tags', 'Plans and settings', $active === 'bizacc:plans');
+            if (can('bizpay.view')) $k .= nav_link('biz-payments.php', 'credit-card', 'Subscription payments', $active === 'bizacc:pay');
+            if (can('bizsupport.view')) $k .= nav_link('biz-support.php', 'life-preserver', 'Support and notices', $active === 'bizacc:support');
+            echo nav_tree('buildings', 'SaaS platform', $sec === 'bizacc', $k);
+        }
         if (can('chat.view')) echo nav_link('chats.php', 'chat-dots', 'Website chat', $sec === 'chat', badge($m['chat'], 'danger'));
     }
 
