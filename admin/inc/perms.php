@@ -26,6 +26,7 @@ const PERMISSIONS = [
     'mkt'        => ['Marketing: campaigns', ['view' => 'View', 'add' => 'Add', 'edit' => 'Edit', 'delete' => 'Delete']],
     'proc'       => ['Procurement: suppliers and purchase orders', ['view' => 'View', 'add' => 'Add', 'edit' => 'Edit', 'delete' => 'Delete']],
     'efris'      => ['EFRIS e-invoicing', ['view' => 'View status', 'edit' => 'Edit EFRIS settings', 'submit' => 'Queue and submit invoices']],
+    'bizacc'     => ['Business accounts (document service)', ['view' => 'View', 'add' => 'Create accounts', 'edit' => 'Edit, activate, suspend, reset passwords']],
     'chat'       => ['Website chat conversations', ['view' => 'View', 'edit' => 'Change status']],
     'admins'     => ['Admin users', ['view' => 'View', 'add' => 'Add', 'edit' => 'Edit, reset password, activate', 'delete' => 'Delete']],
     'roles'      => ['Roles and permissions', ['view' => 'View', 'add' => 'Add', 'edit' => 'Edit', 'delete' => 'Delete']],

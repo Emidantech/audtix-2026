@@ -37,7 +37,7 @@ function doc_totals(array $d, array $cx): array {
 }
 function sig_boxes(array $d): array {
     switch ($d['doc_type']) {
-        case 'receipt': return ['Received by (Audtix)', 'Authorized by', ''];
+        case 'receipt': return [isset($GLOBALS['DOC_CO']) ? 'Received by' : 'Received by (Audtix)', 'Authorized by', ''];
         case 'budget': return ['Prepared by', 'Approved by', ''];
         case 'requisition': return ['Requested by', 'Authorized by', 'Received by'];
         default: return ['Prepared by', 'Authorized by', $d['doc_type'] === 'invoice' ? 'Customer acknowledgement' : 'Customer acceptance'];
