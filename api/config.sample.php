@@ -32,6 +32,17 @@ return [
     // Pick a long random value, use it once, then delete it from this file.
     'setup_token' => '',
 
+    // Website chatbot (Audtix Assistant). Without a key it answers from the built-in knowledge base (api/lib/chatkb.php).
+    // 'ai_api_key': an Anthropic API key (console.anthropic.com) so the bot can answer any question. 'ai_model' is optional.
+    'ai_api_key'  => '',
+    'ai_model'    => 'claude-haiku-5-5',
+    // Hand-off to a person: the whole chat is emailed to notify_to and, when these three are set, sent to your WhatsApp through the
+    // WhatsApp Business Cloud API (developers.facebook.com > WhatsApp). 'whatsapp_to' is the agent number in international format.
+    // Without them the client still gets a "Continue on WhatsApp" button with the chat summary filled in.
+    'whatsapp_token'    => '',
+    'whatsapp_phone_id' => '',
+    'whatsapp_to'       => '256701287388',
+
     // Only set to true while debugging.
     'debug' => false,
 ];

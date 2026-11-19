@@ -24,6 +24,11 @@ function nav_counts(): array {
         $c['docs']['_customers'] = (int) $pdo->query('SELECT COUNT(*) FROM customers')->fetchColumn();
         $c['docs']['_items'] = (int) $pdo->query('SELECT COUNT(*) FROM items')->fetchColumn();
     } catch (Throwable $e) {}
+    $c['mod'] = [];   // totals for the HR, finance, CRM, marketing, procurement and chat modules (zero when their tables do not exist yet)
+    foreach (['hr_employees' => 'hr_employees', 'hr_leave' => "hr_leave WHERE status = 'pending'", 'fin_expenses' => 'fin_expenses', 'crm_deals' => "crm_deals WHERE stage NOT IN ('won','lost')", 'mkt_campaigns' => 'mkt_campaigns',
+             'proc_suppliers' => 'proc_suppliers', 'proc_orders' => 'proc_orders', 'hr_payroll_runs' => 'hr_payroll_runs', 'chat' => "chat_sessions WHERE status = 'handoff'", 'efris' => "efris_log WHERE status IN ('queued','failed')"] as $k => $from) {
+        try { $c['mod'][$k] = (int) db()->query('SELECT COUNT(*) FROM ' . $from)->fetchColumn(); } catch (Throwable $e) { $c['mod'][$k] = 0; }
+    }
     $c['notes'] = []; $c['unread'] = 0;
     try {
         $mods = array_values(array_filter(array_keys(PERMISSIONS), fn($m) => can($m . '.view')));
@@ -146,6 +151,22 @@ function page_head(string $title, ?array $admin = null, string $active = '', arr
         if (can('customers.view')) echo nav_link('customers.php', 'building', 'Customers', $sec === 'customers', count_badge((int) ($dc['_customers'] ?? 0)));
         if (can('items.view')) echo nav_link('items.php', 'box-seam', 'Products & services', $sec === 'items', count_badge((int) ($dc['_items'] ?? 0)));
         if (can('doc_reports.view') || can('quotes.view') || can('requests.view')) echo nav_link('reports.php', 'bar-chart-line', 'Reports', $sec === 'doc_reports');
+    }
+
+    if (function_exists('mod_defs') && (can_any('hr') || can_any('payroll') || can_any('fin') || can_any('crm') || can_any('mkt') || can_any('proc') || can_any('efris') || can_any('chat'))) {
+        $m = $c['mod']; echo '<li class="nav-header">BUSINESS MODULES</li>';
+        if (can('hr.view') || can('payroll.view')) {
+            $k = '';
+            if (can('hr.view')) $k .= nav_link('mod.php?m=hr_employees', 'person-badge', 'Employees', $active === 'hr:hr_employees', count_badge($m['hr_employees'])) . nav_link('mod.php?m=hr_leave', 'calendar2-week', 'Leave', $active === 'hr:hr_leave', badge($m['hr_leave'], 'warning'));
+            if (can('payroll.view')) $k .= nav_link('payroll.php', 'cash-stack', 'Payroll', $active === 'hr:payroll', count_badge($m['hr_payroll_runs']));
+            echo nav_tree('people', 'HR and Payroll', $sec === 'hr', $k);
+        }
+        if (can('fin.view')) echo nav_tree('bank', 'Finance', $sec === 'fin', nav_link('fin.php', 'graph-up-arrow', 'Finance overview', $active === 'fin:overview') . nav_link('mod.php?m=fin_expenses', 'wallet2', 'Expenses', $active === 'fin:fin_expenses', count_badge($m['fin_expenses'])));
+        if (can('crm.view')) echo nav_tree('bullseye', 'CRM', $sec === 'crm', nav_link('crm.php', 'kanban', 'Pipeline', $active === 'crm:pipeline') . nav_link('mod.php?m=crm_deals', 'list-ul', 'All leads and deals', $active === 'crm:crm_deals', count_badge($m['crm_deals'])), $m['crm_deals'] ? '' : '');
+        if (can('mkt.view')) echo nav_link('mod.php?m=mkt_campaigns', 'megaphone', 'Marketing', $sec === 'mkt', count_badge($m['mkt_campaigns']));
+        if (can('proc.view')) echo nav_tree('truck', 'Procurement', $sec === 'proc', nav_link('mod.php?m=proc_suppliers', 'shop', 'Suppliers', $active === 'proc:proc_suppliers', count_badge($m['proc_suppliers'])) . nav_link('mod.php?m=proc_orders', 'cart-check', 'Purchase orders', $active === 'proc:proc_orders', count_badge($m['proc_orders'])));
+        if (can('efris.view')) echo nav_link('efris.php', 'qr-code-scan', 'EFRIS e-invoicing', $sec === 'efris', badge($m['efris'], 'warning'));
+        if (can('chat.view')) echo nav_link('chats.php', 'chat-dots', 'Website chat', $sec === 'chat', badge($m['chat'], 'danger'));
     }
 
     if (can('posts.view') || can('post_types.view') || can('media.view')) {
