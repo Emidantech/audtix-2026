@@ -69,7 +69,10 @@ function doc_settings(): array {
     }
     return $s;
 }
-function doc_setting(string $k, string $d = ''): string { $v = doc_settings()[$k] ?? ''; return $v !== '' ? $v : $d; }
+function doc_setting(string $k, string $d = ''): string {
+    if (isset($GLOBALS['DOC_CO'])) { $v = (string) ($GLOBALS['DOC_CO'][$k] ?? ''); return $v !== '' ? $v : $d; }   // business-account portal (biz/): that business's own details
+    $v = doc_settings()[$k] ?? ''; return $v !== '' ? $v : $d;
+}
 function save_doc_setting(PDO $pdo, string $k, string $v): void {
     $u = $pdo->prepare('UPDATE app_settings SET svalue = ?, updated_at = ? WHERE skey = ?'); $u->execute([$v, now(), $k]);
     if ($u->rowCount() === 0) { $c = $pdo->prepare('SELECT COUNT(*) FROM app_settings WHERE skey = ?'); $c->execute([$k]); if (!(int) $c->fetchColumn()) $pdo->prepare('INSERT INTO app_settings (skey, svalue, updated_at) VALUES (?,?,?)')->execute([$k, $v, now()]); }
@@ -462,10 +465,11 @@ function save_logo(array $file): array {
     return $ok ? [$name, ''] : [null, 'The logo could not be stored.'];
 }
 function company_logo_path(): string {
+    if (isset($GLOBALS['DOC_CO'])) return (string) ($GLOBALS['DOC_CO']['_logo_path'] ?? '') ?: dirname(__DIR__, 2) . '/img/logo-blue.png';
     $f = doc_setting('company_logo'); if ($f && preg_match('/^[a-f0-9]{24}\.png$/', $f) && is_file(logo_dir() . '/' . $f)) return logo_dir() . '/' . $f;
     return dirname(__DIR__, 2) . '/img/logo-blue.png';
 }
-function company_logo_url(): string { $f = doc_setting('company_logo'); return ($f && preg_match('/^[a-f0-9]{24}\.png$/', $f)) ? 'logo.php?f=' . $f : '../img/logo-blue.png'; }
+function company_logo_url(): string { if (isset($GLOBALS['DOC_CO'])) return (string) ($GLOBALS['DOC_CO']['_logo_url'] ?? ''); $f = doc_setting('company_logo'); return ($f && preg_match('/^[a-f0-9]{24}\.png$/', $f)) ? 'logo.php?f=' . $f : '../img/logo-blue.png'; }
 function company_lines(): array {
     return array_values(array_filter([doc_setting('company_address'), trim(doc_setting('company_phone') . '   ' . doc_setting('company_email')), doc_setting('company_web'), doc_setting('company_tin') ? 'TIN: ' . doc_setting('company_tin') : '']));
 }
