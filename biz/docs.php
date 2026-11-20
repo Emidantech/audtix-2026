@@ -1,8 +1,10 @@
 <?php
 require __DIR__ . '/inc/boot.php';
-$u = biz_require(); $a = account(); $pdo = db(); $aid = (int) $a['id'];
+$u = biz_require(); biz_need('docs.view'); biz_need_module('docs'); $a = account(); $pdo = db(); $aid = (int) $a['id'];
 $type = in_array($_GET['type'] ?? '', BIZ_TYPES, true) ? $_GET['type'] : ''; $st = in_array($_GET['status'] ?? '', ['draft', 'posted', 'cancelled'], true) ? $_GET['status'] : ''; $q = trim((string) ($_GET['q'] ?? '')); $page = max(1, (int) ($_GET['page'] ?? 1)); $per = 25;
 $w = ['account_id = ?']; $x = [$aid]; if ($type) { $w[] = 'doc_type = ?'; $x[] = $type; } if ($st) { $w[] = 'status = ?'; $x[] = $st; } if ($q !== '') { $w[] = '(doc_no LIKE ? OR customer_name LIKE ?)'; $x[] = "%$q%"; $x[] = "%$q%"; }
+[$bq, $bp] = biz_branch_sql('id'); if ($bq !== '') { $w[] = substr($bq, 5); $x = array_merge($x, $bp); }
+$bid = (int) ($_GET['branch'] ?? 0); if ($bid && biz_branch() === null) { $w[] = 'id IN (SELECT document_id FROM biz_doc_meta WHERE branch_id = ?)'; $x[] = $bid; }
 $W = ' WHERE ' . implode(' AND ', $w); $c = $pdo->prepare('SELECT COUNT(*) FROM biz_documents' . $W); $c->execute($x); $total = (int) $c->fetchColumn(); $pages = max(1, (int) ceil($total / $per)); $page = min($page, $pages);
 if (isset($_GET['csv'])) { header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="documents.csv"'); $o = fopen('php://output', 'w'); fputcsv($o, ['Number', 'Type', 'Status', 'Date', 'Customer', 'Currency', 'Total']);
     $s = $pdo->prepare('SELECT * FROM biz_documents' . $W . ' ORDER BY id DESC LIMIT 5000'); $s->execute($x); foreach ($s as $d) fputcsv($o, [$d['doc_no'], $d['doc_type'], $d['status'], $d['doc_date'], $d['customer_name'], $d['currency'], $d['total']]); exit; }
